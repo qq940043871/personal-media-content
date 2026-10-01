@@ -1,0 +1,54 @@
+# ===== 本仓库为 media 域正本（源自工作台 p000_0000_it 三域分家）=====
+# 约定与工作台手册一致：密钥永不入库；媒体原件/模型/运行时产物不入库。
+
+# CodeBuddy / WorkBuddy 本地状态
+.workbuddy/
+*.genie
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.pyc
+
+# 运行时产物：模型缓存、媒体原件、输出目录（仅存本地磁盘，首次运行自动生成）
+models/
+**/output/
+**/videos/
+hello_doubao_video/assets/
+**/*.mp4
+**/*.mp3
+**/*.zip
+**/*.7z
+**/*.rar
+
+# 统一存储的运行时数据（素材库/任务库可由 asset scan 重建）
+storage/db/
+storage/articles/
+storage/novels/
+storage/videos_input/
+storage/videos_output/
+
+# Node / 日志 / 系统文件
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
+.uploads/
+
+# AI 工具本地状态
+.zcode/
+
+# 密钥与环境变量：一律不入库（*.example / *.template 模板除外）
+.env
+*.env
+!*.env.example
+!*.env.template
+*.pem
+*.pkey
+*credentials*
+*secret*
+
+# 应用私有配置（含真实密钥，仅存磁盘；模板为 config.yaml.example）
+hello_webchat_official/.aws-article/config.yaml
+hello_webchat_official/.aws-article/tmp/
