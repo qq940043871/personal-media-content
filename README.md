@@ -1,8 +1,10 @@
 # AI 自媒体内容生产中台
 
-> 一站式 AI 内容生产：短视频 + 图文发布 + 长篇小说创作 + 书评分析  
-> 仓库根目录：`p000_0000_media`  
+> 一站式 AI 内容生产：短视频 + 图文发布 + 长篇小说创作 + 书评分析 + 个人博客  
+> 本仓库是「自媒体域」正本，2026-10 从个人工作台 `p000_0000_it` 三域分家而来（工作台保有 it/money 两域与《工作台手册》）  
 > 文档体系见 [docs/INDEX.md](docs/INDEX.md)
+
+> **运行时目录说明**：`models/`、`storage/` 运行子目录、各业务线 `output/`、`videos/`、素材原件（mp4/模型缓存）等**不入库**，首次运行自动生成或需从本地磁盘同步（见 [.gitignore](.gitignore)）。下表标注「运行时」的目录在全新 clone 中不存在，属正常现象。
 
 ## 快速开始
 
@@ -19,9 +21,10 @@ python media-cli.py status
 | `core/` | 共享能力层：配置、LLM、ASR、视频、发布、素材、任务 |
 | `dashboard/` | Web 数据看板（Flask） |
 | `media-cli.py` | 统一命令行入口 |
-| `models/` | 本地 ASR 等模型缓存 |
-| `storage/` | 统一素材/任务数据库与产物根目录 |
+| `models/` | 本地 ASR 等模型缓存（运行时生成，不入库） |
+| `storage/` | 统一素材/任务数据库与产物根目录（`db/` 为本地运行库，不入库，可由 asset scan 重建） |
 | `docs/` | 全仓文档索引与规范 |
+| `blog/` | 个人博客（静态站，`_seed/` 种子生成，生成脚本依赖工作台知识库） |
 | `hello_doubao_video/` | 短视频生产线（豆包 + FFmpeg） |
 | `hello_feishu/` | 教学视频 → 飞书知识库流水线 |
 | `hello_novel/` | 小说创作生产线（多部作品） |
@@ -110,3 +113,4 @@ python media-cli.py dashboard start --port 5000
 - [Agent 导航 AGENTS.md](AGENTS.md)
 - [文档总索引 docs/INDEX.md](docs/INDEX.md)
 - [目录规范 docs/DIRECTORY_STANDARD.md](docs/DIRECTORY_STANDARD.md)
+- 《工作台手册》：位于上游工作台 `D:\ai_person\p000_0000_it\it\knowledge-base\pages\00_overview\工作台手册.md`（三域归属决策表、发布流程、Git 约定；跨仓文档，不在本仓库）

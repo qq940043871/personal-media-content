@@ -1,13 +1,13 @@
 # AI 自媒体内容生产中台 — 架构说明
 
-> 版本：v2.1（文档与目录整理版）  
-> 更新：2026-09-19  
-> 仓库根目录名：`p000_0000_media`
+> 版本：v2.2（三域分家后梳理版）  
+> 更新：2026-10-01  
+> 仓库：`personal-media-content`（自媒体域正本；2026-10 自工作台 `p000_0000_it` 的 `media/` 分家而来）
 
 ## 一、整体架构
 
 ```
-p000_0000_media/
+personal-media-content/
 │
 ├── core/                          ← 共享核心能力层
 │   ├── config.py                  # 统一配置（.env）
@@ -27,13 +27,14 @@ p000_0000_media/
 │
 ├── dashboard/                     ← Web 看板（Flask）
 ├── media-cli.py                   ← 统一 CLI
-├── models/                        ← 模型缓存
-├── storage/                       ← 统一产物/数据库根
+├── models/                        ← 模型缓存（运行时生成，不入库）
+├── storage/                       ← 统一产物/数据库根（db/ 与运行子目录不入库）
 ├── docs/                          ← 文档索引与目录规范
 │   ├── INDEX.md
 │   └── DIRECTORY_STANDARD.md
 │
-├── hello_doubao_video/            ← 短视频线（docs/scripts/assets/media）
+├── blog/                          ← 个人博客（静态站，_seed/ 种子生成）
+├── hello_doubao_video/            ← 短视频线（docs/scripts/media；assets 运行时生成）
 ├── hello_feishu/                  ← 教学视频→飞书流水线
 ├── hello_novel/                   ← 小说线（novels/<book>/process|chapters/…）
 ├── hello_webchat_official/        ← 公众号技能流水线（drafts/）
@@ -57,7 +58,7 @@ p000_0000_media/
 | `STORAGE_ARTICLES` | `storage/articles` |
 | `STORAGE_NOVELS` | `storage/novels` |
 
-说明：平台素材库 `storage/novels` **独立于** 业务线正文目录 `hello_novel/novels/`。扫描入库时用 `--dir` 指向业务线 `chapters/`。
+说明：平台素材库 `storage/novels` **独立于** 业务线正文目录 `hello_novel/novels/`。扫描入库时用 `--dir` 指向业务线 `chapters/`。上述 storage 子目录与 `storage/db/*.db` 均为运行时数据，不入库（`db/` 可由 asset scan / 任务运行重建）。
 
 ### 2.2 llm_client.py
 
@@ -150,6 +151,7 @@ hello_webchat_* → 公众号成稿（技能线 drafts / 程序线 output）
 
 ## 七、兼容与迁移
 
+- 本仓库 2026-10 自工作台 `p000_0000_it` 的 `media/` 三域分家而来，是自媒体域正本；历史提交信息中的三域叙事以文档现状为准。
 - 业务线 **顶层目录名**（`hello_*`）保持不变，`media-cli.py status` 仍按这些名字探测。
 - 小说正文已从仓库根平铺迁至 `hello_novel/novels/<book>/chapters/`。
 - 旧文档中的 `hello_novel/cangyuantu/8-正文/`、`p000_0000_self_media` 等命名已废弃。
