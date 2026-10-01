@@ -8,7 +8,7 @@
 - 可配置的文档命名格式
 
 使用方式：
-    python publish_to_feishu.py --chapters-dir ./8-正文/第一卷 --space-id xxx
+    python publish_to_feishu.py --chapters-dir ./hello_novel/novels/cangyuantu/chapters --space-id xxx
     python publish_to_feishu.py --all --start 1 --end 100 --space-id xxx
 
 也可以作为模块导入：
@@ -257,9 +257,9 @@ def main():
     else:
         parser.print_help()
         print("\n示例:")
-        print("  python publish_novel_feishu.py --chapters-dir ./8-正文/第一卷")
-        print("  python publish_novel_feishu.py --file ./8-正文/第1章.txt")
-        print("  python publish_novel_feishu.py --chapters-dir ./8-正文 --recursive --force")
+        print("  python publish_novel_feishu.py --chapters-dir ./hello_novel/novels/cangyuantu/chapters")
+        print("  python publish_novel_feishu.py --file ./hello_novel/novels/cangyuantu/chapters/8-续写-第1章.txt")
+        print("  python publish_novel_feishu.py --chapters-dir ./hello_novel/novels/cangyuantu/chapters --recursive --force")
 
 
 if __name__ == '__main__':

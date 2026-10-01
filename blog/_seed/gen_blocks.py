@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
-"""分块生成种子文章导入数据：每块 = 独立合法的 b64（按字符切，保证 UTF-8 边界安全）"""
+"""分块生成种子文章导入数据：每块 = 独立合法的 b64（按字符切，保证 UTF-8 边界安全）
+
+文章源文件取自工作台知识库（it/ 域），可用环境变量 KB_ROOT 覆盖；
+产物写到本脚本所在目录（本仓库 blog/_seed/）。
+"""
 import base64
 import json
 import os
 
-ROOT = r"D:\ai_person\p000_0000_it"
-SEED = os.path.join(ROOT, "media", "blog", "_seed")
+KB_ROOT = os.environ.get("KB_ROOT", r"D:\ai_person\p000_0000_it")
+SEED = os.path.dirname(os.path.abspath(__file__))
 META = os.path.join(SEED, "meta.json")
 BLOCKS = os.path.join(SEED, "blocks.jsonl")
 CHUNK = 400  # 最坏情况（全中文）：400×3字节→1600 b64，JSON 行 <1700，安全
@@ -67,7 +71,7 @@ def smart_cut(text, limit):
 meta = []
 blocks = []
 for idx, (rel, title, summary, tags, emoji, hue, cutlen) in enumerate(POSTS, 1):
-    with open(os.path.join(ROOT, rel), "r", encoding="utf-8") as f:
+    with open(os.path.join(KB_ROOT, rel), "r", encoding="utf-8") as f:
         text = f.read().strip()
     if cutlen:
         text = smart_cut(text, cutlen)
