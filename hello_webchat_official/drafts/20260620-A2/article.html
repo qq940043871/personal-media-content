@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大模型预训练全流程：数据清洗、Tokenizer、分布式策略（工程实战）</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #fafafa;
+        }
+        h2 {
+            font-size: 1.8em;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 10px;
+            margin-top: 40px;
+            color: #2c3e50;
+        }
+        h3 {
+            font-size: 1.4em;
+            color: #34495e;
+            margin-top: 35px;
+            border-left: 4px solid #3498db;
+            padding-left: 12px;
+        }
+        h4 {
+            font-size: 1.15em;
+            color: #555;
+            margin-top: 25px;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 20px 0;
+            padding: 12px 20px;
+            background: #eaf2f8;
+            color: #555;
+            font-style: italic;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 35px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.95em;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px 14px;
+            text-align: left;
+        }
+        th {
+            background: #34495e;
+            color: #fff;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background: #f4f4f4;
+        }
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 16px 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+        code {
+            font-family: "Fira Code", "Consolas", "Monaco", monospace;
+            font-size: 0.9em;
+        }
+        p code, li code {
+            background: #f0f0f0;
+            color: #c7254e;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        ul, ol {
+            padding-left: 24px;
+        }
+        li {
+            margin-bottom: 6px;
+        }
+        strong {
+            color: #2c3e50;
+        }
+        em {
+            color: #777;
+        }
+        .pipeline-diagram {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 20px;
+            font-family: "Fira Code", "Consolas", monospace;
+            font-size: 0.85em;
+            line-height: 1.5;
+            white-space: pre;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+
+<h2>大模型预训练全流程：数据清洗、Tokenizer、分布式策略（工程实战）</h2>
+
+<blockquote>
+从原始语料到千亿参数模型，每一个环节都藏着工程决策的深坑。本文基于真实项目经验，拆解预训练三大核心阶段的工程细节。
+</blockquote>
+
+<hr>
+
+<h3>0. 全局视角：预训练的工程全景</h3>
+
+<p>很多技术文章把预训练描述成"拿数据训模型"五个字。但当你真正从零搭建一套预训练流水线时，会发现90%的工程量不在模型本身，而在数据处理和训练基础设施上。</p>
+
+<p>一个典型的预训练项目，工程投入大致是这样的比例：</p>
+
+<ul>
+<li><strong>数据采集与清洗</strong>：40%</li>
+<li><strong>Tokenizer训练与数据Token化</strong>：15%</li>
+<li><strong>分布式训练基础设施搭建与调优</strong>：30%</li>
+<li><strong>模型架构实现与调试</strong>：10%</li>
+<li><strong>评估与迭代</strong>：5%</li>
+</ul>
+
+<p>本文聚焦前三个环节，也就是数据清洗、Tokenizer、分布式策略的工程实战。不讲原理推导，只讲你真正动手做时会踩的坑。</p>
+
+<hr>
+
+<h3>1. 数据清洗：脏数据是模型的慢性毒药</h3>
+
+<h4>1.1 数据源规划</h4>
+
+<p>预训练数据通常来自多个渠道：</p>
+
+<table>
+<thead>
+<tr><th>数据源</th><th>典型占比</th><th>特点</th></tr>
+</thead>
+<tbody>
+<tr><td>Common Crawl</td><td>40-60%</td><td>量大、噪声多、需要深度清洗</td></tr>
+<tr><td>书籍/学术论文</td><td>15-25%</td><td>质量高、领域覆盖窄</td></tr>
+<tr><td>代码（GitHub）</td><td>10-20%</td><td>对推理能力有帮助</td></tr>
+<tr><td>百科/知识库</td><td>5-10%</td><td>结构化程度高</td></tr>
+<tr><td>对话/论坛</td><td>5-10%</td><td>语言多样性好</td></tr>
+</tbody>
+</table>
+
+<p>关键决策：<strong>配比不是拍脑袋定的</strong>。你需要先确定下游任务方向，再反推数据配比。做通用大模型和做代码大模型，数据策略完全不同。</p>
+
+<h4>1.2 清洗流水线的工程实现</h4>
+
+<p>一套生产级的数据清洗流水线，通常包含以下阶段：</p>
+
+<p><strong>第一阶段：格式标准化</strong></p>
+
+<pre><code># 典型的文档解析pipeline
+def normalize_document(raw_doc: dict) -> str:
+    # 1. HTML去标签，保留正文结构
+    text = html_to_text(raw_doc['html'])
+    # 2. Unicode标准化（全角/半角、特殊空格等）
+    text = unicodedata.normalize('NFKC', text)
+    # 3. 去除零宽字符、控制字符
+    text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]', '', text)
+    # 4. 连续空行合并
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+</code></pre>
+
+<p>这一步看着简单，但Unicode的坑比你想象的多。全角数字、特殊连字符、RTL标记符，每一个都可能导致下游处理异常。</p>
+
+<p><strong>第二阶段：语言识别与过滤</strong></p>
+
+<pre><code>from fasttext import load_model
+
+lid_model = load_model('lid.176.bin')
+
+def filter_by_language(text: str, target_lang='zh', threshold=0.65) -> bool:
+    predictions = lid_model.predict(text.replace('\n', ' ')[:512])
+    lang, score = predictions[0][0].replace('__label__', ''), predictions[1][0]
+    return lang == target_lang and score >= threshold
+</code></pre>
+
+<p>注意：fasttext的语言识别模型对短文本（&lt;50字符）准确率骤降。工程上通常的做法是，短文本直接按来源域名的语言标签归类，不做模型推理。</p>
+
+<p><strong>第三阶段：质量过滤</strong></p>
+
+<p>这是最关键也最tricky的阶段。常用策略：</p>
+
+<ul>
+<li><strong>基于规则</strong>：过滤广告、导航栏、版权声明、Cookie声明等模板化内容</li>
+<li><strong>基于困惑度（Perplexity）</strong>：用小型语言模型计算文本困惑度，过滤困惑度过高的文本（通常意味着乱码或低质量拼凑）</li>
+<li><strong>基于重复率</strong>：n-gram重复率过高的文档直接丢弃</li>
+<li><strong>基于长度</strong>：过短（&lt;50字）或过长（&gt;100万字）的文档需要特殊处理</li>
+</ul>
+
+<pre><code>def compute_perplexity(text: str, kenlm_model) -> float:
+    """用KenLM计算困惑度，作为质量信号"""
+    log_prob = kenlm_model.score(text)
+    num_words = len(text.split())
+    return 10 ** (-log_prob / num_words) if num_words > 0 else float('inf')
+
+def quality_filter(doc: dict) -> bool:
+    pp = compute_perplexity(doc['text'], kenlm)
+    dup_ratio = compute_ngram_dup_ratio(doc['text'], n=5)
+    alpha_ratio = sum(c.isalpha() for c in doc['text']) / len(doc['text'])
+
+    return (
+        10 < pp < 1000 and           # 困惑度在合理范围
+        dup_ratio < 0.3 and           # 重复率不超过30%
+        alpha_ratio > 0.6 and         # 可读字符占比
+        len(doc['text']) > 100        # 最小长度
+    )
+</code></pre>
+
+<p><strong>第四阶段：去重</strong></p>
+
+<p>去重是数据清洗中最耗计算资源的环节。工程上通常用<strong>MinHash + LSH</strong>做近似去重：</p>
+
+<pre><code>from datasketch import MinHashLSH, MinHash
+
+def build_dedup_index(docs: list, threshold=0.8):
+    lsh = MinHashLSH(threshold=threshold, num_perm=128)
+    for i, doc in enumerate(docs):
+        m = MinHash(num_perm=128)
+        for word in doc['text'].split():
+            m.update(word.encode('utf8'))
+        lsh.insert(str(i), m)
+    return lsh
+</code></pre>
+
+<p>真实项目中的一个血泪教训：<strong>去重必须在Token化之前做</strong>。很多团队先Token化再去重，结果发现相同内容的Token ID序列因为边界对齐问题略有不同，导致去重率大幅下降。</p>
+
+<h4>1.3 数据清洗的工程陷阱</h4>
+
+<ul>
+<li><strong>内存管理</strong>：Common Crawl原始数据动辄几百TB，不能全量加载。必须用流式处理（generator），每个文件处理完立即释放</li>
+<li><strong>并行化</strong>：清洗是CPU密集型任务，用多进程而非多线程。Python的GIL在这里是真实瓶颈</li>
+<li><strong>可复现性</strong>：每次清洗都要记录完整的参数和版本，方便回溯。建议用配置文件驱动，不要硬编码阈值</li>
+<li><strong>中间存储格式</strong>：用parquet而非jsonl，压缩比和读取速度都好得多</li>
+</ul>
+
+<hr>
+
+<h3>2. Tokenizer：模型的"五官"</h3>
+
+<h4>2.1 为什么Tokenizer这么重要</h4>
+
+<p>Tokenizer决定了模型"看到"什么。一个糟糕的Tokenizer会导致：</p>
+
+<ul>
+<li>中文每个字都被拆成2-3个Token，浪费序列长度</li>
+<li>稀有领域的专业术语被拆得支离破碎</li>
+<li>数字、代码的编码效率极低</li>
+</ul>
+
+<p>直接影响：<strong>同样的模型参数和训练预算，Tokenizer差的模型实际"看到"的有效信息量少30-50%。</strong></p>
+
+<h4>2.2 BPE训练的工程要点</h4>
+
+<p>主流大模型使用BPE（Byte Pair Encoding）或其变体。训练Tokenizer时的关键工程决策：</p>
+
+<p><strong>词表大小选择</strong></p>
+
+<table>
+<thead>
+<tr><th>词表大小</th><th>优点</th><th>缺点</th></tr>
+</thead>
+<tbody>
+<tr><td>32K</td><td>模型Embedding层参数少</td><td>编码效率低，序列长</td></tr>
+<tr><td>64K</td><td>平衡点</td><td>主流选择</td></tr>
+<tr><td>128K</td><td>编码效率高</td><td>Embedding层参数多，稀有Token训练不充分</td></tr>
+<tr><td>256K+</td><td>极高编码效率</td><td>训练数据必须足够大，否则大量Token几乎不出现</td></tr>
+</tbody>
+</table>
+
+<p>实践建议：<strong>中文为主的模型建议64K-128K</strong>。纯英文模型32K就够，但中文是象形文字，一字一Token的需求使得词表必须更大。</p>
+
+<p><strong>训练语料的配比</strong></p>
+
+<p>Tokenizer的训练语料配比不需要和预训练数据完全一致，但要覆盖目标语言的分布。一个常见错误是只用英文语料训练Tokenizer，然后用于中文模型——中文编码效率会极低。</p>
+
+<pre><code>import sentencepiece as spm
+
+spm.SentencePieceTrainer.train(
+    input='tokenizer_train_data.txt',    # 混合语料
+    model_prefix='tokenizer',
+    vocab_size=64000,
+    model_type='bpe',
+    character_coverage=0.9995,           # 中文要高，英文0.9999够
+    byte_fallback=True,                  # 未知字符用UTF-8字节回退
+    split_digits=True,                   # 数字逐位拆分，提升算术能力
+    num_threads=32,                      # 并行训练
+)
+</code></pre>
+
+<p><strong>特殊Token设计</strong></p>
+
+<pre><code>[BOS] [EOS] [PAD] [UNK] [SEP] [CLS] [MASK]
+&lt;|system|&gt; &lt;|user|&gt; &lt;|assistant|&gt;         # 对话角色
+<|fim_prefix|> <|fim_middle|> <|fim_suffix|>      # Fill-in-middle
+</code></pre>
+
+<p>特殊Token的设计直接影响模型的微调能力。建议在预训练阶段就把SFT需要的特殊Token加进去，否则后期扩展词表会导致Embedding矩阵不兼容。</p>
+
+<h4>2.3 Tokenizer的工程验证</h4>
+
+<p>训练完Tokenizer后，必须做以下验证：</p>
+
+<pre><code>def validate_tokenizer(sp, test_texts: list):
+    results = []
+    for text in test_texts:
+        tokens = sp.encode(text, out_type=str)
+        decoded = sp.decode(sp.encode(text))
+
+        # 1. 无损验证
+        assert decoded == text, f"编码-解码不一致: {text[:50]}"
+
+        # 2. 压缩率（每个Token平均多少字节）
+        compression = len(text.encode('utf-8')) / len(tokens)
+
+        # 3. 中文压缩率单独统计
+        if is_chinese(text):
+            results.append(('zh', compression))
+        else:
+            results.append(('en', compression))
+
+    return results
+</code></pre>
+
+<p>中文压缩率目标：<strong>每个Token对应1.5-2.0个汉字</strong>。低于1.2说明词表设计有问题。</p>
+
+<hr>
+
+<h3>3. 分布式策略：让千卡集群高效运转</h3>
+
+<h4>3.1 为什么分布式策略是工程核心</h4>
+
+<p>一个7B参数的模型，FP16训练时需要约14GB显存存储参数，加上梯度和优化器状态，总显存需求约56GB。单卡放不下，必须分布式。</p>
+
+<p>但分布式不只是"把模型切开放到多张卡上"这么简单。通信开销、负载均衡、容错恢复，每一个都是工程深坑。</p>
+
+<h4>3.2 三种并行策略</h4>
+
+<p><strong>数据并行（Data Parallelism）</strong></p>
+
+<p>最简单的并行方式。每张卡持有完整模型副本，处理不同的数据批次。</p>
+
+<pre><code># PyTorch DDP
+model = DistributedDataParallel(model, device_ids=[local_rank])
+</code></pre>
+
+<p>优点：实现简单，通信开销小（只需同步梯度）。<br>
+缺点：每张卡都要装下完整模型，受单卡显存限制。<br>
+适用：模型能放进单卡时（通常&lt;3B参数）。</p>
+
+<p><strong>张量并行（Tensor Parallelism，TP）</strong></p>
+
+<p>把单个算子（矩阵乘法）拆到多张卡上执行。例如一个<code>[H, H]</code>的线性层，按列切成<code>[H, H/N]</code>放到N张卡上。</p>
+
+<pre><code># Megatron-LM 风格的列并行
+class ColumnParallelLinear(nn.Module):
+    def __init__(self, in_features, out_features, num_gpus):
+        super().__init__()
+        self.weight = nn.Parameter(
+            torch.empty(out_features // num_gpus, in_features)
+        )
+</code></pre>
+
+<p>优点：可以突破单卡显存限制。<br>
+缺点：每层计算都需要AllReduce通信，对网络带宽要求极高（必须用NVLink）。<br>
+适用：同一节点内的多卡并行（通常8卡）。</p>
+
+<p><strong>流水线并行（Pipeline Parallelism，PP）</strong></p>
+
+<p>把模型的不同层放到不同卡上，数据像流水线一样流过。</p>
+
+<p>关键问题：<strong>气泡率（Bubble Ratio）</strong>。如果把模型均分为K个阶段，朴素流水线的气泡率为<code>(K-1)/K</code>，即K=4时有75%的时间在等待。</p>
+
+<p>解决方案：<strong>微批次（Micro-batching）</strong>。把一个大batch分成多个小micro-batch，让不同micro-batch在不同阶段同时执行。</p>
+
+<pre><code># 流水线调度示意
+# GPipe: 先全前向，再全反向
+# 1F1B: 交替执行前向和反向，减少内存峰值
+
+def schedule_1f1b(micro_batches, num_stages):
+    """1F1B调度：减少峰值内存"""
+    # warmup阶段：逐步填满流水线
+    for i in range(num_stages - 1):
+        forward(micro_batches[i])
+
+    # 稳态阶段：1个forward + 1个backward
+    for i in range(num_stages - 1, len(micro_batches)):
+        forward(micro_batches[i])
+        backward(micro_batches[i - num_stages + 1])
+
+    # cooldown阶段：排空流水线
+    for i in range(num_stages - 1):
+        backward(micro_batches[len(micro_batches) - num_stages + 1 + i])
+</code></pre>
+
+<h4>3.3 3D并行：实战中的混合策略</h4>
+
+<p>真正的生产训练通常组合使用三种并行：</p>
+
+<div class="pipeline-diagram">假设：64张GPU，模型70B
+├── TP = 8   （同节点8卡NVLink互联）
+├── PP = 4   （4个Pipeline阶段）
+└── DP = 2   （2组数据并行）
+    总计 = 8 × 4 × 2 = 64 GPU</div>
+
+<p>配置的经验法则：</p>
+<ul>
+<li>TP放在通信最快的层级（NVLink &gt; IB &gt; RoCE）</li>
+<li>PP放在通信较慢的层级（只需点对点传输激活值）</li>
+<li>DP放在最外层，通信量最小</li>
+</ul>
+
+<h4>3.4 通信优化实战</h4>
+
+<p>分布式训练中，通信往往是性能瓶颈。几个关键优化：</p>
+
+<p><strong>梯度压缩</strong></p>
+
+<pre><code># 梯度先在本地累积N步，再同步
+optimizer = ZeroRedundancyOptimizer(
+    model.parameters(),
+    optimizer_class=torch.optim.AdamW,
+    overlap_with_param=True,  # 通信与计算重叠
+)
+</code></pre>
+
+<p><strong>通信与计算重叠</strong></p>
+
+<pre><code># 在反向传播过程中，某一层梯度计算完成后立即发起通信
+# 而不是等所有层梯度都算完再统一通信
+with model.no_sync():  # 禁止同步，累积梯度
+    loss.backward()     # 前几层的梯度
+# 这里触发同步
+loss.backward()         # 最后一层的梯度
+</code></pre>
+
+<p><strong>激活值重计算（Activation Checkpointing）</strong></p>
+
+<p>用时间换空间。前向传播时不保存中间激活值，反向传播时重新计算。</p>
+
+<pre><code>from torch.utils.checkpoint import checkpoint
+
+class TransformerBlock(nn.Module):
+    def forward(self, x):
+        # 不保存中间结果，反向时重算
+        return checkpoint(self._forward, x, use_reentrant=False)
+</code></pre>
+
+<p>实测效果：<strong>显存减少60%，训练速度下降约25%</strong>。这是个划算的tradeoff。</p>
+
+<h4>3.5 容错与恢复</h4>
+
+<p>千卡训练跑几周，不考虑容错就是自杀。必须做：</p>
+
+<ol>
+<li><strong>定期Checkpoint</strong>：每隔1000-2000步保存完整训练状态（模型参数 + 优化器状态 + 数据加载器位置 + 随机数种子）</li>
+<li><strong>异步Checkpoint</strong>：在后台线程写Checkpoint，不阻塞训练</li>
+<li><strong>弹性训练</strong>：检测到节点故障时，自动摘除故障节点，用剩余节点继续训练</li>
+</ol>
+
+<pre><code># 异步Checkpoint示例
+import torch.distributed.checkpoint as dcp
+
+def async_save_checkpoint(state, step):
+    """异步保存，不阻塞训练"""
+    path = f"checkpoints/step_{step}"
+    # 用独立进程写磁盘
+    dist_cp.save(
+        state_dict=state,
+        storage_writer=dcp.FileSystemWriter(path),
+        planner=dcp.async_save  # 异步写入
+    )
+</code></pre>
+
+<hr>
+
+<h3>4. 端到端Pipeline：串联三大环节</h3>
+
+<p>最后把三个环节串起来，展示一个完整的预训练Pipeline：</p>
+
+<div class="pipeline-diagram">┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│  原始语料     │───>│  数据清洗     │───>│  清洗后语料   │
+│  (TB级)      │    │  (流式处理)   │    │  (压缩存储)   │
+└──────────────┘    └──────────────┘    └──────┬───────┘
+                                               │
+                    ┌──────────────┐            │
+                    │  Tokenizer   │&lt;───────────┘
+                    │  训练+验证    │    (用子集训练Tokenizer)
+                    └──────┬───────┘
+                           │
+                    ┌──────▼───────┐
+                    │  数据Token化  │    (分布式Map处理)
+                    │  + 打包      │
+                    └──────┬───────┘
+                           │
+                    ┌──────▼───────┐
+                    │  分布式训练   │    (3D并行 + 容错)
+                    │  数千GPU     │
+                    └──────┬───────┘
+                           │
+                    ┌──────▼───────┐
+                    │  评估+迭代   │    (困惑度 + 下游任务)
+                    └──────────────┘</div>
+
+<p>每个环节的输出都是下一个环节的输入，任何一步的质量问题都会被放大。这就是为什么预训练是系统工程，不是炼丹。</p>
+
+<hr>
+
+<h3>5. 总结：三个核心认知</h3>
+
+<p><strong>第一，数据质量 &gt; 数据数量。</strong> 1TB高质量数据的训练效果通常优于10TB低质量数据。在数据清洗上的投入，回报率远高于增加训练算力。</p>
+
+<p><strong>第二，Tokenizer是被严重低估的环节。</strong> 大多数团队花大量时间调模型架构，却对Tokenizer一笔带过。一个针对目标语言优化的Tokenizer，可以让模型效果提升一个档次。</p>
+
+<p><strong>第三，分布式策略的核心不是算法，是工程。</strong> 3D并行的原理不难理解，但如何调通、如何优化通信、如何处理故障，才是真正的挑战。做好分布式训练需要深厚的系统工程能力。</p>
+
+<p>预训练是一场工程马拉松。理解这三个环节的工程细节，才能在真正动手时不被埋在技术债里。</p>
+
+<hr>
+
+<p><em>本文基于公开资料与工程实践经验整理，部分代码为简化示意，生产环境需根据具体框架（Megatron-LM、DeepSpeed、FSDP等）调整。</em></p>
+
+</body>
+</html>

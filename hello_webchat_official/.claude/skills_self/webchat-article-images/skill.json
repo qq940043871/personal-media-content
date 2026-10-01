@@ -1,0 +1,14 @@
+{
+  "name": "webchat-article-images",
+  "version": "1.0.0",
+  "author": "haswhere",
+  "description": "公众号封面｜文章配图｜AI生图 — 基于豆包SeeDream模型为文章生成封面图和正文配图。",
+  "license": "MIT",
+  "homepage": "https://github.com/haswhere/webchat-article-solo",
+  "tags": ["wechat", "公众号", "images", "ai-generation", "seedream"],
+  "permissions": ["filesystem", "network", "shell"],
+  "entryPoint": {
+    "type": "natural",
+    "path": "SKILL.md"
+  }
+}

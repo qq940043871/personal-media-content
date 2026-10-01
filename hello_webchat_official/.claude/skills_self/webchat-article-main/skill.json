@@ -1,0 +1,21 @@
+{
+  "name": "webchat-article-main",
+  "version": "1.0.0",
+  "author": "haswhere",
+  "description": "微信公众号AI文章写作助手主入口 — 从主题输入到微信发布全流程编排，路由到各子能力。",
+  "license": "MIT",
+  "homepage": "https://github.com/haswhere/webchat-article-solo",
+  "tags": ["wechat", "公众号", "content-automation", "orchestration", "wechat-article"],
+  "permissions": ["filesystem", "shell"],
+  "entryPoint": {
+    "type": "natural",
+    "path": "SKILL.md"
+  },
+  "dependencies": [
+    "webchat-article-writing",
+    "webchat-article-images",
+    "webchat-article-publish",
+    "webchat-article-themes",
+    "webchat-article-agent"
+  ]
+}

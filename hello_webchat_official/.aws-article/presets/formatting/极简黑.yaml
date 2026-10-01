@@ -1,0 +1,29 @@
+displayName: 极简黑
+name: simple
+description: 极度克制的留白风格，适合思想深度类账号
+styles:
+  a: color:#18181B; text-decoration:underline; text-underline-offset:3px;
+  p: font-size:15px; line-height:2; color:#333; margin:1em 0; letter-spacing:0.5px;
+  u: text-decoration:underline; text-underline-offset:4px; text-decoration-color:#ccc;
+  em: font-style:italic; color:#666;
+  h1: text-align:center; font-size:24px; font-weight:300; color:#18181B; letter-spacing:4px; margin-bottom:32px;
+  h2: font-size:18px; font-weight:400; color:#18181B; letter-spacing:2px; margin:2.5em 0 1em;
+  h3: font-size:16px; font-weight:600; color:#333; margin:2em 0 0.8em;
+  h4: font-size:15px; font-weight:500; color:#555; margin:1.5em 0 0.6em;
+  hr: border:none; width:24px; height:1px; background:#18181B; margin:2.5em auto;
+  li: margin-bottom:8px; line-height:1.8; color:#444;
+  ol: padding-left:20px; margin:0.8em 0;
+  td: 'padding:8px 12px; border-bottom:1px solid #eee; text-align:left; color:#555;'
+  th: 'padding:10px 12px; border-bottom:2px solid #18181B; font-weight:600; text-align:left; color:#18181B;'
+  ul: padding-left:20px; margin:0.8em 0;
+  del: text-decoration:line-through; color:#bbb;
+  img: max-width:100%; display:block; margin:0 auto;
+  pre: 'background:#fafafa; padding:20px; border-radius:4px; font-size:13px; line-height:1.8; border:1px solid #e5e5e5; overflow-x:auto;
+    color:#333;'
+  code: color:#18181B; background:#f4f4f5; padding:2px 6px; border-radius:2px; font-size:90%;
+  table: width:100%; border-collapse:collapse; margin:1.5em 0; font-size:14px;
+  strong: font-weight:700; color:#18181B;
+  highlight: 'background:#fafafa; padding:16px 20px; margin:1.5em 0; border:1px solid #eee;'
+  blockquote: border:none; padding:16px 24px; margin:1.5em 2em; color:#666; font-style:italic; font-size:16px; line-height:2;
+    text-align:center;
+  figcaption: text-align:center; font-size:12px; color:#bbb; margin-top:8px; letter-spacing:1px;

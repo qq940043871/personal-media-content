@@ -1,0 +1,14 @@
+{
+  "name": "webchat-article-writing",
+  "version": "1.0.0",
+  "author": "haswhere",
+  "description": "公众号文章写作｜AI写稿｜大纲生成｜内容润色 — 基于豆包大模型生成技术文章，支持大纲→写稿→润色全流程。",
+  "license": "MIT",
+  "homepage": "https://github.com/haswhere/webchat-article-solo",
+  "tags": ["wechat", "公众号", "writing", "llm", "doubao"],
+  "permissions": ["filesystem", "network", "shell"],
+  "entryPoint": {
+    "type": "natural",
+    "path": "SKILL.md"
+  }
+}

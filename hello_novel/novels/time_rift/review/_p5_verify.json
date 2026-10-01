@@ -1,0 +1,24 @@
+{
+  "stats": {
+    "61-120": {
+      "generic": 0,
+      "ok": 60,
+      "no_footer": 0,
+      "scanned": 60
+    },
+    "121-300": {
+      "generic": 0,
+      "ok": 180,
+      "no_footer": 0,
+      "scanned": 180
+    },
+    "341-480": {
+      "generic": 0,
+      "ok": 140,
+      "no_footer": 0,
+      "scanned": 140
+    }
+  },
+  "remaining": [],
+  "full_gen": 0
+}

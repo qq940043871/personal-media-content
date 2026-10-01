@@ -1,0 +1,12 @@
+# AI 自媒体内容生产中台 — 全局依赖
+# 安装：pip install -r requirements.txt
+
+# ===== 基础依赖 =====
+python-dotenv>=1.0.0        # .env 配置加载
+requests>=2.31.0            # HTTP 请求
+Pillow>=10.2.0              # 图片处理
+python-multipart>=0.0.9     # 多部分表单
+Flask>=3.0.0                # Web 数据看板
+
+# ===== 可选依赖（按需安装）=====
+# faster-whisper>=1.0.0     # 本地 ASR（大，首次启用时自动安装）

@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>盘龙 — 小说时间线</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Noto Serif SC', 'SimSun', 'STSong', serif;
+            background: #0a0a0a;
+            color: #d4c5a9;
+            overflow-x: hidden;
+            line-height: 1.8;
+        }
+
+        /* 背景粒子 */
+        .bg-particles {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+        }
+        .particle {
+            position: absolute;
+            background: radial-gradient(circle, rgba(212,175,55,0.6) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: floatUp linear infinite;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        /* 主容器 */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 标题区 */
+        .hero {
+            text-align: center;
+            padding: 80px 0 60px;
+            position: relative;
+        }
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(180deg, #f0d78c 0%, #c9973b 50%, #a67c27 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 0.15em;
+            text-shadow: none;
+            margin-bottom: 8px;
+        }
+        .hero .subtitle {
+            font-size: 1.1rem;
+            color: #8a7a5a;
+            letter-spacing: 0.3em;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .hero .author {
+            font-size: 0.9rem;
+            color: #6a5a3a;
+            margin-top: 10px;
+        }
+        .hero .divider {
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #d4af37, transparent);
+            margin: 25px auto;
+        }
+
+        /* 时间线 */
+        .timeline {
+            position: relative;
+            padding: 40px 0 100px;
+        }
+
+        /* 中轴线 */
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(
+                180deg,
+                #d4af37 0%,
+                #b8860b 15%,
+                #daa520 30%,
+                #ff6347 45%,
+                #8b0000 60%,
+                #9400d3 75%,
+                #00ffff 90%,
+                #ffd700 100%
+            );
+            border-radius: 2px;
+            box-shadow: 0 0 20px rgba(212,175,55,0.3);
+        }
+
+        /* 阶段标签 */
+        .phase-label {
+            position: relative;
+            text-align: center;
+            margin: 60px 0 30px;
+            z-index: 2;
+        }
+        .phase-label span {
+            display: inline-block;
+            padding: 10px 35px;
+            background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.05));
+            border: 1px solid rgba(212,175,55,0.3);
+            border-radius: 30px;
+            color: #d4af37;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            font-family: 'Noto Sans SC', sans-serif;
+            backdrop-filter: blur(5px);
+        }
+
+        /* 时间线条目 */
+        .tl-item {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .tl-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .tl-item.left { flex-direction: row; }
+        .tl-item.right { flex-direction: row-reverse; }
+
+        .tl-item.left .tl-content { margin-right: auto; text-align: right; padding-right: 60px; }
+        .tl-item.right .tl-content { margin-left: auto; text-align: left; padding-left: 60px; }
+
+        .tl-content {
+            width: 42%;
+            position: relative;
+        }
+
+        /* 时间节点圆点 */
+        .tl-dot {
+            position: absolute;
+            left: 50%;
+            top: 16px;
+            transform: translate(-50%, -50%);
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            z-index: 3;
+            box-shadow: 0 0 15px currentColor;
+        }
+        .tl-dot.early { background: #d4af37; color: #d4af37; }
+        .tl-dot.ernst { background: #b8860b; color: #b8860b; }
+        .tl-dot.rise { background: #daa520; color: #daa520; }
+        .tl-dot.war { background: #ff6347; color: #ff6347; }
+        .tl-dot.higher { background: #8b0000; color: #8b0000; }
+        .tl-dot.sovereign { background: #9400d3; color: #9400d3; }
+        .tl-dot.cosmic { background: #00ffff; color: #00ffff; }
+        .tl-dot.ultimate { background: #ffd700; color: #ffd700; }
+
+        /* 时间 */
+        .tl-time {
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #b8960a;
+            letter-spacing: 0.1em;
+            margin-bottom: 6px;
+        }
+
+        /* 卡片 */
+        .tl-card {
+            background: linear-gradient(135deg, rgba(30,30,30,0.9), rgba(20,20,20,0.95));
+            border: 1px solid rgba(212,175,55,0.15);
+            border-radius: 12px;
+            padding: 22px 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .tl-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
+            opacity: 0.6;
+            border-radius: 12px 12px 0 0;
+        }
+        .tl-card.early::before { background: linear-gradient(90deg, #d4af37, #f0d78c); }
+        .tl-card.ernst::before { background: linear-gradient(90deg, #b8860b, #daa520); }
+        .tl-card.rise::before { background: linear-gradient(90deg, #daa520, #ffd700); }
+        .tl-card.war::before { background: linear-gradient(90deg, #ff6347, #ff8c69); }
+        .tl-card.higher::before { background: linear-gradient(90deg, #8b0000, #cd5c5c); }
+        .tl-card.sovereign::before { background: linear-gradient(90deg, #9400d3, #ba55d3); }
+        .tl-card.cosmic::before { background: linear-gradient(90deg, #00ffff, #87ceeb); }
+        .tl-card.ultimate::before { background: linear-gradient(90deg, #ffd700, #ffee58); }
+
+        .tl-card:hover {
+            border-color: rgba(212,175,55,0.4);
+            box-shadow: 0 8px 30px rgba(212,175,55,0.15);
+            transform: translateY(-3px);
+        }
+        .tl-card h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #f0d78c;
+            margin-bottom: 6px;
+            letter-spacing: 0.05em;
+        }
+        .tl-card .tl-tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            padding: 3px 10px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            font-family: 'Noto Sans SC', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+        .tag-realm { background: rgba(212,175,55,0.15); color: #d4af37; }
+        .tag-event { background: rgba(255,99,71,0.15); color: #ff6347; }
+        .tag-key { background: rgba(148,0,211,0.15); color: #ba55d3; }
+
+        .tl-card p {
+            font-size: 0.9rem;
+            color: #a09080;
+            line-height: 1.7;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .timeline::before { left: 20px; }
+            .tl-dot { left: 20px; }
+            .tl-item { flex-direction: row !important; }
+            .tl-item.left .tl-content,
+            .tl-item.right .tl-content {
+                width: 100%;
+                text-align: left !important;
+                padding: 0 0 0 50px;
+                margin: 0;
+            }
+            .container { padding: 0 15px; }
+        }
+
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            padding: 60px 0 40px;
+            color: #6a5a3a;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            position: relative;
+            z-index: 1;
+        }
+        .footer .end-dot {
+            display: inline-block;
+            width: 10px; height: 10px;
+            background: #ffd700;
+            border-radius: 50%;
+            margin: 0 8px;
+            box-shadow: 0 0 20px rgba(255,215,0,0.8);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(255,215,0,0.4); }
+            50% { box-shadow: 0 0 30px rgba(255,215,0,1); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 背景粒子 -->
+    <div class="bg-particles" id="particles"></div>
+
+    <!-- ============ 标题区 ============ -->
+    <div class="container">
+        <div class="hero">
+            <h1>盘 龙</h1>
+            <p class="subtitle">COILING DRAGON · 小说时间线</p>
+            <div class="divider"></div>
+            <p class="author">作者：我吃西红柿 &nbsp;|&nbsp; 起点中文网</p>
+        </div>
+
+        <!-- ============ 时间线 ============ -->
+        <div class="timeline" id="timeline">
+
+            <!-- ===== 阶段一：玉兰少年 ===== -->
+            <div class="phase-label"><span>第一章 · 玉兰少年</span></div>
+
+            <!-- 林雷出生 -->
+            <div class="tl-item left">
+                <div class="tl-content">
+                    <div class="tl-card early">
+                        <p class="tl-time">起点</p>
+                        <h3>林雷·巴鲁克 出生</h3>
+                        <span class="tl-tag tag-event">起源</span>
+                        <p>玉兰大陆芬莱王国乌山镇，巴鲁克家族——曾经的龙血战士家族衰落后，林雷出生。父亲霍格、母亲琳娜，弟弟沃顿。</p>
+                    </div>
+                </div>
+                <div class="tl-dot early"></div>
+            </div>
+
+            <!-- 母亲被带走 -->
+            <div class="tl-item right">
+                <div class="tl-content">
+                    <div class="tl-card early">
+                        <p class="tl-time">林雷 6岁</p>
+                        <h3>母亲被光明教廷带走</h3>
+                        <span class="tl-tag tag-event">悲剧</span>
+                        <p>母亲琳娜被发现灵魂纯净度高，被光明教廷强行带走。父亲霍格从此一蹶不振，林雷立志变强救回母亲。</p>
+                    </div>
+                </div>
+                <div class="tl-dot early"></div>
+            </div>
+
+            <!-- 盘龙戒指 -->
+            <div class="tl-item left">
+                <div class="tl-content">
+                    <div class="tl-card early">
+                        <p class="tl-time">林雷 7岁</p>
+                        <h3>获得盘龙戒指</h3>
+                        <span class="tl-tag tag-key">关键转折</span>
+                        <p>在祖宅杂物间发现盘龙戒指并滴血认主，戒指中寄宿着圣域魔导师德林·柯沃特的灵魂残片——他将成为林雷最重要的导师。</p>
+                    </div>
+                </div>
+                <div class="tl-dot early"></div>
+            </div>
+
+            <!-- ===== 阶段二：恩斯特学院 ===== -->
+            <div class="phase-label"><span>第二章 · 恩斯特岁月</span></div>
+
+            <!-- 进入恩斯特 -->
+            <div class="tl-item right">
+                <div class="tl-content">
+                    <div class="tl-card ernst">
+                        <p class="tl-time">林雷 8岁</p>
+                        <h3>考入恩斯特学院</h3>
+                        <span class="tl-tag tag-event">转折</span>
+                        <p>以惊人的魔法天赋（双系超等亲和力）考入玉兰大陆第一魔法学院——恩斯特学院，开启魔法师之路。</p>
+                    </div>
+                </div>
+                <div class="tl-dot ernst"></div>
+            </div>
+
+            <!-- 结识好友 -->
+            <div class="tl-item left">
+                <div class="tl-content">
+                    <div class="tl-card ernst">
+                        <p class="tl-time">学院时期</p>
+                        <h3>结识好友与初恋</h3>
+                        <span class="tl-tag tag-event">羁绊</span>
+                        <p>结识挚友雷诺（耶鲁门继承人）、乔治、迪克西；与艾丽斯相恋——这段感情最终以背叛收场，成为林雷心性成长的重要磨砺。</p>
+                    </div>
+                </div>
+                <div class="tl-dot ernst"></div>
+            </div>
+
+            <!-- 石雕天才 -->
+            <div class="tl-item right">
+                <div class="tl-content">
+                    <div class="tl-card ernst">
+                        <p class="tl-time">青年时期</p>
+                        <h3>石雕天才崛起</h3>
+                        <span class="tl-tag tag-realm">雕刻</span>
+                        <p>在德林爷爷指导下学习平刀流石雕，以「梦醒」雕像震惊大陆，成为一代石雕宗师——石雕与灵魂的共鸣，让林雷的精神力远超同阶。</p>
+                    </div>
+                </div>
+                <div class="tl-dot ernst"></div>
+            </div>
+
+            <!-- 龙血觉醒 -->
+            <div class="tl-item left">
+                <div class="tl-content">
+                    <div class="tl-card rise">
+                        <p class="tl-time">青年时期</p>
+                        <h3>龙血战士血脉觉醒</h3>
+                        <span class="tl-tag tag-key">觉醒</span>
+                        <p>在魔兽山脉被棘背铁甲龙追杀时饮下龙血，巴鲁克家族的龙血战士血脉觉醒——从此魔武双修，战力远超同级。</p>
+                    </div>
+                </div>
+                <div class="tl-dot rise"></div>
+            </div>
+
+            <!-- ===== 阶段三：奥布莱恩风云 ===== -->
+            <div class="phase-label"><span>第三章 · 奥布莱恩风云</span></div>
+
+            <!-- 毕业 -->
+            <div class="tl-item right">
+                <div class="tl-content">
+                    <div class="tl-card rise">
+                        <p class="tl-time">约 18-20岁</p>
+                        <h3>毕业与大陆游历</h3>
+                        <span class="tl-tag tag-event">成长</span>
+                        <p>从恩斯特毕业后，前往奥布莱恩帝国游历，结识奥利维亚、德斯黎等强者，实力飞速提升。</p>
+                    </div>
+                </div>
+                <div class="tl-dot rise"></div>
+            </div>
+
+            <!-- 德林牺牲 -->
+            <div class="tl-item left">
+                <div class="tl-content">
+                    <div class="tl-card rise">
+                        <p class="tl-time">圣域之战</p>
+                        <h3>德林·柯沃特牺牲</h3>
+                        <span class="tl-tag tag-event">悲壮</span>
+                        <p>为保护林雷，德林爷爷的灵魂燃烧殆尽、彻底消散。临终前传下大地奥义感悟——这是林雷一生最深的痛，也是他变强最强动力之一。</p>
+                    </div>
+                </div>
+                <div class="tl-dot rise"></div>
+            </div>
+
+            <!-- ===== 阶段四：圣域之战 ===== -->
+            <div class="phase-label"><span>第四章 · 血染圣域</span></div>
+
+            <!-- 迪克西之死 -->
+            <div class="tl-item right">
+                <div class="tl-content">
+                    <div class="tl-card war">
+                        <p class="tl-time">圣域之战</p>
+                        <h3>挚友迪克西之死</h3>
+                        <span class="tl-tag tag-event">仇恨</span>
+                        <p>在玉兰大陆圣域战争中，挚友迪克西死于光明教廷之手。林雷悲愤之下大杀四方，与光明教廷结下不死不休之仇。</p>
+                    </div>
+                </div>
+                <div class="tl-dot war"></div>
+            </div>
+
+            <!-- 复仇教廷 -->
+            <div class="tl-item left">
+                <div class="tl-content">
+                    <div class="tl-card war">
+                        <p class="tl-time">圣域之战</p>
+                        <h3>血洗光明教廷</h3>
+                        <span class="tl-tag tag-key">巅峰复仇</span>
+                        <p>林雷以圣域极限实力杀入光明教廷圣岛，击杀教皇海廷斯及多位天使降临体，震惊玉兰大陆！救回被困的母亲琳娜。</p>
+                    </div>
+                </div>
+                <div class="tl-dot war"></div>
+            </div>
+
+            <!-- 成神 -->
+            <div class="tl-item right">
+                <div class="tl-content">
+                    <div class="tl-card war">
+                        <p class="tl-time">约 30岁</p>
+                        <h3>突破成神</h3>
+                        <span class="tl-tag tag-realm">神级</span>
+                        <p>在圣域极限打磨多年后，终于跨出最后一步——突破圣域极限、点燃神火，成为下位神！</p>
+                    </div>
+                </div>
+                <div class="tl-dot war"></div>
+            </div>
+
+            <!-- ===== 阶段五：众神墓地 ===== -->
+            <div class="phase-label"><span>第五章 · 众神墓地</span></div>
+
+            <!-- 进入墓地 -->
+            <div class="tl-item left">
+                <div class="tl-content">
+                    <div class="tl-card war">
+                        <p class="tl-time">成神后</p>
+                        <h3>闯荡众神墓地</h3>
+                        <span class="tl-tag tag-event">冒险</span>
+                        <p>与贝贝（噬神鼠）一同进入传说中连接着无数位面的众神墓地，层层闯关，获得大量宝物与神格。</p>
+                    </div>
+                </div>
+                <div class="tl-dot war"></div>
+            </div>
+
+            <!-- 中位神 -->
+            <div class="tl-item right">
+                <div class="tl-content">
+                    <div class="tl-card war">
+                        <p class="tl-time">墓地历练</p>
+                        <h3>突破中位神</h3>
+                        <span class="tl-tag tag-realm">晋级</span>
+                        <p>在众神墓地中经历生死磨砺，融合大地法则与风系法则感悟，突破至中位神境界。</p>
+                    </div>
+                </div>
+                <div class="tl-dot war"></div>
+            </div>
+
+            <!-- 主神降临 -->
+            <div class="tl-item left">
+                <div class="tl-content">
+                    <div class="tl-card war">
+                        <p class="tl-time">墓地终层</p>
+                        <h3>遭遇主神化身</h3>
+                        <span class="tl-tag tag-key">震撼</span>
+                        <p>众神墓地第十八层，命运主宰奥夫的分身降临！林雷首次见识到主神级别的恐怖力量，为后续进入高等位面埋下伏笔。</p>
+                    </div>
+                </div>
+                <div class="tl-dot war"></div>
+            </div>
+
+            <!-- ===== 阶段六：地狱征程 ===== -->
+            <div class="phase-label"><span>第六章 · 地狱征程</span></div>
+
+            <!-- 飞升地狱 -->
+            <div class="tl-item right">
+                <div class="tl-content">
+                    <div class="tl-card higher">
+                        <p class="tl-time">约 40-50岁</p>
+                        <h3>飞升至地狱位面</h3>
+                        <span class="tl-tag tag-key">新篇章</span>
+                        <p>离开玉兰大陆物质位面，飞升至四大至高位面之一——「地狱」。这里强者如云，上位神遍地走，真正的残酷试炼开始。</p>
+                    </div>
+                </div>
+                <div class="tl-dot higher"></div>
+            </div>
+
+            <!-- 贝鲁特 -->
+            <div class="tl-item left">
+                <div class="tl-content">
+                    <div class="tl-card higher">
+                        <p class="tl-time">地狱时期</p>
+                        <h3>贝鲁特现身</h3>
+                        <span class="tl-tag tag-key">靠山</span>
+                        <p>终于得知贝贝的身份——噬神鼠贝鲁特的孙子！而贝鲁特本人，竟是地狱位面的主神之一！林雷获得强力盟友。</p>
+                    </div>
+                </div>
+                <div class="tl-dot higher"></div>
+            </div>
+
+            <!-- 上位神 -->
+            <div class="tl-item right">
+                <div class="tl-content">
+                    <div class="tl-card higher">
+                        <p class="tl-time">地狱历练</p>
+                        <h3>突破上位神</h3>
+                        <span class="tl-tag tag-realm">上位神</span>
+                        <p>在地狱的残酷环境中不断战斗与悟道，四大元素法则（地、火、水、风）全部推演至极致，突破上位神境界。</p>
+                    </div>
+                </div>
+                <div class="tl-dot higher"></div>
+            </div>
+
+            <!-- 四大法则融合 -->
+            <div class="tl-item left">
+                <div class="tl-content">
+                    <div class="tl-card higher">
+                        <p class="tl-time">地狱深处</p>
+                        <h3>四大法则融合</h3>
+                        <span class="tl-tag tag-key">顿悟</span>
+                        <p>地、火、水、风——四大元素法则初步融合，领悟出「地火水风」的毁灭之力，战斗力质变，上位神中几无敌手。</p>
+                    </div>
+                </div>
+                <div class="tl-dot higher"></div>
+            </div>
+
+            <!-- ===== 阶段七：主神之路 ===== -->
+            <div class="phase-label"><span>第七章 · 主神之路</span></div>
+
+            <!-- 获取主神格 -->
+            <div class="tl-item right">
+                <div class="tl-content">
+                    <div class="tl-card sovereign">
+                        <p class="tl-time">地狱决战</p>
+                        <h3>斩杀主神·炼化主神格</h3>
+                        <span class="tl-tag tag-key">登顶</span>
+                        <p>在命运的推动下，林雷成功斩杀一位主神，炼化其主神格——突破成为「主神」！掌控大地主宰权柄。</p>
+                    </div>
+                </div>
+                <div class="tl-dot sovereign"></div>
+            </div>
+
+            <!-- 主神之战 -->
+            <div class="tl-item left">
+                <div class="tl-content">
+                    <div class="tl-card sovereign">
+                        <p class="tl-time">主神时期</p>
+                        <h3>主神间的大战</h3>
+                        <span class="tl-tag tag-event">巅峰对决</span>
+                        <p>因母亲被光明主宰奥古斯塔关押的旧怨，林雷向奥古斯塔宣战。主神之战波及无数位面！命运主宰奥夫、死亡主宰等纷纷卷入。</p>
+                    </div>
+                </div>
+                <div class="tl-dot sovereign"></div>
+            </div>
+
+            <!-- 四法则大圆满 -->
+            <div class="tl-item right">
+                <div class="tl-content">
+                    <div class="tl-card sovereign">
+                        <p class="tl-time">主神后期</p>
+                        <h3>地火水风 大圆满</h3>
+                        <span class="tl-tag tag-realm">大圆满</span>
+                        <p>林雷将地、火、水、风四大元素法则全部推演至圆满之境，成为史无前例的四大法则大圆满主神——实力已远超普通主神。</p>
+                    </div>
+                </div>
+                <div class="tl-dot sovereign"></div>
+            </div>
+
+            <!-- 斩杀奥古斯塔 -->
+            <div class="tl-item left">
+                <div class="tl-content">
+                    <div class="tl-card sovereign">
+                        <p class="tl-time">最终对决</p>
+                        <h3>斩杀光明主宰奥古斯塔</h3>
+                        <span class="tl-tag tag-event">复仇终章</span>
+                        <p>四大法则大圆满之力完全爆发，林雷正面斩杀光明主宰奥古斯塔！数万年的恩怨终于画上句号。</p>
+                    </div>
+                </div>
+                <div class="tl-dot sovereign"></div>
+            </div>
+
+            <!-- ===== 阶段八：鸿蒙终章 ===== -->
+            <div class="phase-label"><span>第八章 · 鸿蒙终章</span></div>
+
+            <!-- 宇宙之主 -->
+            <div class="tl-item right">
+                <div class="tl-content">
+                    <div class="tl-card cosmic">
+                        <p class="tl-time">终战之后</p>
+                        <h3>突破宇宙之主</h3>
+                        <span class="tl-tag tag-realm">宇宙之主</span>
+                        <p>在奥古斯塔陨落后，林雷融合四大元素法则参悟宇宙本源奥秘，突破主神桎梏——成为「宇宙之主」！体内自行衍化一方宇宙。</p>
+                    </div>
+                </div>
+                <div class="tl-dot cosmic"></div>
+            </div>
+
+            <!-- 鸿蒙空间 -->
+            <div class="tl-item left">
+                <div class="tl-content">
+                    <div class="tl-card cosmic">
+                        <p class="tl-time">宇宙之主后</p>
+                        <h3>进入鸿蒙空间</h3>
+                        <span class="tl-tag tag-key">终极</span>
+                        <p>成为宇宙之主后突破物质位面壁垒，进入「鸿蒙空间」——这里是宇宙的源头，也是鸿蒙掌控者所在之处。</p>
+                    </div>
+                </div>
+                <div class="tl-dot cosmic"></div>
+            </div>
+
+            <!-- 鸿蒙掌控者 -->
+            <div class="tl-item right">
+                <div class="tl-content">
+                    <div class="tl-card ultimate">
+                        <p class="tl-time">终点</p>
+                        <h3>成为鸿蒙掌控者</h3>
+                        <span class="tl-tag tag-realm">至高</span>
+                        <p>通过鸿蒙的考验，林雷成为第二位「鸿蒙掌控者」——与鸿蒙并列，跳出宇宙轮回，俯瞰万千世界！</p>
+                    </div>
+                </div>
+                <div class="tl-dot ultimate"></div>
+            </div>
+
+            <!-- 金榜 -->
+            <div class="tl-item left">
+                <div class="tl-content">
+                    <div class="tl-card ultimate">
+                        <p class="tl-time">终章</p>
+                        <h3>鸿蒙金榜留名</h3>
+                        <span class="tl-tag tag-key">传奇</span>
+                        <p>林雷将其宇宙命名为「林蒙宇宙」，名刻鸿蒙金榜。与家人亲友团聚于自己创造的宇宙中——从乌山镇少年到家国万界的缔造者，传奇终成永恒。</p>
+                    </div>
+                </div>
+                <div class="tl-dot ultimate"></div>
+            </div>
+
+        </div>
+
+        <!-- 页脚 -->
+        <div class="footer">
+            <span class="end-dot"></span>
+            从乌山少年到鸿蒙掌控者
+            <span class="end-dot"></span>
+            <br>
+            <small>「地火水风，四大圆满；鸿蒙金榜，永世流传」</small>
+        </div>
+    </div>
+
+    <script>
+        // 生成背景粒子
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 40; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.width = p.style.height = (Math.random() * 4 + 2) + 'px';
+            p.style.animationDuration = (Math.random() * 12 + 8) + 's';
+            p.style.animationDelay = (Math.random() * 10) + 's';
+            particlesContainer.appendChild(p);
+        }
+
+        // 滚动动画
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+        document.querySelectorAll('.tl-item').forEach(el => observer.observe(el));
+
+        // 初始可见项
+        setTimeout(() => {
+            document.querySelectorAll('.tl-item').forEach((el, i) => {
+                const rect = el.getBoundingClientRect();
+                if (rect.top < window.innerHeight) {
+                    setTimeout(() => el.classList.add('visible'), i * 80);
+                }
+            });
+        }, 200);
+    </script>
+</body>
+</html>

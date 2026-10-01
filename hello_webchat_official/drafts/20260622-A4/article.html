@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KV Cache 原理与优化：PagedAttention、vLLM 的前世今生</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    line-height: 1.8;
+    color: #1a1a2e;
+    background: #f8f9fa;
+  }
+  article {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2.5rem 2rem;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  /* Header */
+  .article-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid #e8e8e8;
+  }
+  .article-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #0d1117;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+  }
+  .article-meta {
+    font-size: 0.9rem;
+    color: #656d76;
+  }
+  .article-meta span + span::before {
+    content: "·";
+    margin: 0 0.5rem;
+  }
+  .tags {
+    margin-top: 0.6rem;
+  }
+  .tag {
+    display: inline-block;
+    background: #eef1f6;
+    color: #4a5568;
+    padding: 0.15rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin: 0.2rem 0.25rem;
+  }
+  /* Body */
+  h2 {
+    font-size: 1.4rem;
+    color: #0d1117;
+    margin: 2.5rem 0 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid #e1e4e8;
+  }
+  h3 {
+    font-size: 1.15rem;
+    color: #24292f;
+    margin: 1.8rem 0 0.8rem;
+  }
+  p {
+    margin-bottom: 1rem;
+    text-align: justify;
+  }
+  strong { color: #0d1117; }
+  hr {
+    border: none;
+    border-top: 1px solid #e8e8e8;
+    margin: 2.5rem 0;
+  }
+  /* Lists */
+  ul, ol {
+    margin: 0.6rem 0 1.2rem 1.6rem;
+  }
+  li {
+    margin-bottom: 0.45rem;
+  }
+  li strong {
+    color: #24292f;
+  }
+  /* Code */
+  code {
+    font-family: "JetBrains Mono", "Fira Code", "SF Mono", Menlo, monospace;
+    font-size: 0.88em;
+    background: #f0f2f5;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    color: #d63384;
+  }
+  pre {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    padding: 1.2rem 1.4rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1rem 0 1.4rem;
+    font-size: 0.88rem;
+    line-height: 1.7;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+  }
+  /* Table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0 1.4rem;
+    font-size: 0.92rem;
+  }
+  th, td {
+    border: 1px solid #d0d7de;
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+  }
+  th {
+    background: #f6f8fa;
+    font-weight: 600;
+    color: #24292f;
+  }
+  tr:nth-child(even) { background: #fafbfc; }
+  /* Utility */
+  .emoji { font-style: normal; }
+</style>
+</head>
+<body>
+
+<article>
+
+<header class="article-header">
+  <h1>KV Cache 原理与优化：PagedAttention、vLLM 的前世今生</h1>
+  <div class="article-meta">
+    <span>haswhere</span>
+    <span>2026-06-22</span>
+    <span>科技</span>
+  </div>
+  <div class="tags">
+    <span class="tag">LLM</span>
+    <span class="tag">KV Cache</span>
+    <span class="tag">PagedAttention</span>
+    <span class="tag">vLLM</span>
+    <span class="tag">推理优化</span>
+  </div>
+</header>
+
+<h2>为什么 KV Cache 是 LLM 推理的命门</h2>
+
+<p>当你用 ChatGPT 对话时，模型并不是每次都从头计算整个序列。它会复用之前已经算好的 Key 和 Value 向量，这就是 <strong>KV Cache</strong>。没有它，生成一个 1000 token 的回复，计算量会从 O(n) 暴涨到 O(n²)。</p>
+
+<p>但 KV Cache 本身也是一把双刃剑——它用空间换时间，却在高并发场景下成为显存瓶颈。一个 70B 参数的模型，单条请求的 KV Cache 就可能吃掉数 GB 显存。当数百个请求同时涌入，显存立刻告急。</p>
+
+<p>这篇文章，我们从原理出发，拆解 KV Cache 的本质问题，然后看 PagedAttention 和 vLLM 如何一步步解决它。</p>
+
+<hr>
+
+<h2>一、KV Cache 的工作原理</h2>
+
+<h3>1.1 自回归生成的本质</h3>
+
+<p>Transformer 的自回归生成是逐 token 进行的。生成第 n 个 token 时，需要计算当前 token 的 Query 与<strong>所有</strong>前序 token 的 Key 做点积，再与对应的 Value 加权求和。</p>
+
+<p>如果每次生成都重新计算所有 token 的 K 和 V，复杂度是灾难性的。于是我们缓存它们——每生成一个新 token，就把它的 K、V 向量存下来，下次直接读取。</p>
+
+<pre><code>生成 token_t 时：
+  Q = W_q · x_t                    # 只算当前 token 的 Q
+  K = concat(K_cache, W_k · x_t)   # 拼接缓存的 K
+  V = concat(V_cache, W_v · x_t)   # 拼接缓存的 V
+  output = softmax(Q · K^T) · V</code></pre>
+
+<h3>1.2 显存消耗有多大</h3>
+
+<p>以 LLaMA-70B 为例：</p>
+<ul>
+  <li>每层 128 个头（GQA），每个头维度 128</li>
+  <li>80 层 Transformer</li>
+  <li>FP16 精度，每个元素 2 字节</li>
+  <li>单个 token 的 KV Cache ≈ <strong>2 × 80 × 128 × 128 × 2 bytes ≈ 5 MB</strong></li>
+</ul>
+
+<p>一条 4096 token 的请求，KV Cache 就要吃掉 <strong>20 GB</strong>。而一张 A100 80GB 的显卡，模型权重本身就要占用 140 GB（70B × 2 bytes），只能靠多卡并行。留给 KV Cache 的空间极为有限。</p>
+
+<p>这就是问题的核心：<strong>KV Cache 的显存管理效率，直接决定了推理系统的吞吐量。</strong></p>
+
+<hr>
+
+<h2>二、朴素实现的困境</h2>
+
+<h3>2.1 连续内存分配的浪费</h3>
+
+<p>最直觉的做法是为每条请求预分配一块连续显存，大小等于最大序列长度。但问题是：</p>
+
+<ul>
+  <li><strong>内部碎片</strong>：请求实际长度往往远小于最大长度，预分配的空间大量浪费。</li>
+  <li><strong>外部碎片</strong>：不同请求长度不同，释放后留下大小不一的空洞，难以利用。</li>
+  <li><strong>无法动态扩展</strong>：一旦预分配用完，请求就被截断或拒绝。</li>
+</ul>
+
+<p>实测显示，这种朴素方式的显存利用率只有 <strong>20%-40%</strong>。也就是说，你花大价钱买的 A100，有一半以上的显存在空转。</p>
+
+<h3>2.2 请求调度的两难</h3>
+
+<p>推理系统面临一个经典矛盾：</p>
+<ul>
+  <li><strong>先来先服务（FCFS）</strong>：简单公平，但长请求会阻塞短请求（队头阻塞）。</li>
+  <li><strong>短作业优先（SJF）</strong>：需要预知请求长度，实际场景很难做到。</li>
+</ul>
+
+<p>无论哪种策略，只要显存分配效率低，系统吞吐量就上不去。</p>
+
+<hr>
+
+<h2>三、PagedAttention：用操作系统思维解决显存管理</h2>
+
+<h3>3.1 核心洞察</h3>
+
+<p>UC Berkeley 的研究团队提出了一个优雅的类比：<strong>KV Cache 的显存管理，和操作系统的虚拟内存管理本质上是同一个问题。</strong></p>
+
+<p>操作系统用<strong>分页（Paging）</strong>解决进程内存的碎片问题：把物理内存切成固定大小的页（Page），进程看到的是连续的虚拟地址空间，实际物理页可以分散存放。</p>
+
+<p>PagedAttention 把这个思路搬到了 GPU 上。</p>
+
+<h3>3.2 工作机制</h3>
+
+<ol>
+  <li><strong>物理块（Physical Block）</strong>：把 GPU 显存切成固定大小的块，每块存储固定数量 token 的 KV 向量。比如每块存 16 个 token。</li>
+  <li><strong>逻辑块（Logical Block）</strong>：每条请求看到的是连续的逻辑块序列，通过<strong>块表（Block Table）</strong>映射到物理块。</li>
+  <li><strong>按需分配</strong>：请求到达时，不预分配最大长度，而是每生成 16 个 token 才申请一个新物理块。</li>
+  <li><strong>共享前缀</strong>：多条请求如果共享相同的 system prompt 或 few-shot 示例，它们的 KV Cache 可以共享同一组物理块，用引用计数管理。</li>
+</ol>
+
+<pre><code>请求 A: [逻辑块0] → [物理块3]
+        [逻辑块1] → [物理块7]
+        [逻辑块2] → [物理块1]
+
+请求 B: [逻辑块0] → [物理块3]   # 共享！引用计数 +1
+        [逻辑块1] → [物理块9]</code></pre>
+
+<h3>3.3 效果对比</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>指标</th>
+      <th>朴素连续分配</th>
+      <th>PagedAttention</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>显存利用率</td>
+      <td>20%-40%</td>
+      <td>接近 100%</td>
+    </tr>
+    <tr>
+      <td>内部碎片</td>
+      <td>严重（预分配最大长度）</td>
+      <td>极小（按需分配）</td>
+    </tr>
+    <tr>
+      <td>外部碎片</td>
+      <td>严重（大小不一的空洞）</td>
+      <td>不存在（固定块大小）</td>
+    </tr>
+    <tr>
+      <td>前缀共享</td>
+      <td>不支持</td>
+      <td>原生支持</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>PagedAttention 把显存利用率从不到 40% 提升到了接近 <strong>100%</strong>，意味着同样的硬件可以同时服务 <strong>2-4 倍</strong>的请求。</p>
+
+<hr>
+
+<h2>四、vLLM：从论文到生产</h2>
+
+<h3>4.1 诞生背景</h3>
+
+<p>vLLM 最初是 UC Berkeley Sky Computing Lab 的研究项目，论文《Efficient Memory Management for Large Language Model Serving with PagedAttention》发表于 2023 年。但它的野心远不止一篇论文——vLLM 要做一个<strong>生产级的 LLM 推理引擎</strong>。</p>
+
+<h3>4.2 架构设计</h3>
+
+<p>vLLM 的核心组件：</p>
+
+<ul>
+  <li><strong>调度器（Scheduler）</strong>：决定哪些请求进入 GPU 执行，支持抢占和优先级。</li>
+  <li><strong>KV Cache 管理器</strong>：基于 PagedAttention 的块分配器，管理所有请求的 KV Cache 生命周期。</li>
+  <li><strong>执行引擎</strong>：高效的 CUDA kernel 实现，支持连续批处理（Continuous Batching）。</li>
+</ul>
+
+<p><strong>连续批处理</strong>是另一个关键优化。传统批处理必须等一个 batch 的所有请求都完成才能开始下一个。连续批处理允许新请求随时加入正在执行的 batch，只要有空闲的 KV Cache 块可用。这大幅提升了 GPU 利用率。</p>
+
+<h3>4.3 演进历程</h3>
+
+<p><strong>2023 年：起步</strong></p>
+<ul>
+  <li>vLLM 0.1 发布，实现 PagedAttention 核心。</li>
+  <li>支持 LLaMA、OPT 等模型。</li>
+  <li>吞吐量比 HuggingFace Transformers 提升 <strong>24 倍</strong>。</li>
+</ul>
+
+<p><strong>2024 年：生态爆发</strong></p>
+<ul>
+  <li>支持 GQA（Grouped-Query Attention）、MoE 等新架构。</li>
+  <li>引入 Prefix Caching，进一步优化共享前缀场景。</li>
+  <li>支持 FP8 量化推理。</li>
+  <li>成为 LangChain、LlamaIndex 等框架的默认推理后端。</li>
+</ul>
+
+<p><strong>2025 年：走向全能</strong></p>
+<ul>
+  <li>支持多模态模型（视觉、音频）。</li>
+  <li>引入 Disaggregated Prefill，把预填充和解码阶段分离到不同 GPU。</li>
+  <li>支持 Speculative Decoding，用小模型加速大模型生成。</li>
+  <li>与 NVIDIA TensorRT-LLM、AMD ROCm 深度集成。</li>
+</ul>
+
+<p><strong>2026 年：现状</strong></p>
+<ul>
+  <li>vLLM 已经成为事实标准的开源 LLM 推理引擎。</li>
+  <li>支持 100+ 种模型架构。</li>
+  <li>社区贡献者超过 1000 人。</li>
+  <li>被众多云厂商和企业采用。</li>
+</ul>
+
+<h3>4.4 与其他引擎的对比</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>特性</th>
+      <th>vLLM</th>
+      <th>TensorRT-LLM</th>
+      <th>SGLang</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>开源协议</td>
+      <td>Apache 2.0</td>
+      <td>Apache 2.0</td>
+      <td>Apache 2.0</td>
+    </tr>
+    <tr>
+      <td>PagedAttention</td>
+      <td>✅</td>
+      <td>✅</td>
+      <td>✅ (RadixAttention)</td>
+    </tr>
+    <tr>
+      <td>连续批处理</td>
+      <td>✅</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>模型覆盖</td>
+      <td>最广</td>
+      <td>NVIDIA 生态</td>
+      <td>中等</td>
+    </tr>
+    <tr>
+      <td>易用性</td>
+      <td>高</td>
+      <td>中（需要编译）</td>
+      <td>高</td>
+    </tr>
+    <tr>
+      <td>极致性能</td>
+      <td>高</td>
+      <td>最高（NVIDIA 优化）</td>
+      <td>高</td>
+    </tr>
+    <tr>
+      <td>生产成熟度</td>
+      <td>高</td>
+      <td>高</td>
+      <td>中</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>五、KV Cache 优化的前沿方向</h2>
+
+<h3>5.1 压缩：减少 KV Cache 的体积</h3>
+
+<ul>
+  <li><strong>量化</strong>：把 FP16 的 KV Cache 量化到 INT8 甚至 INT4，显存占用直接减半或更多。</li>
+  <li><strong>稀疏化</strong>：只保留重要的 token 的 KV Cache，丢弃不重要的。H2O（Heavy Hitter Oracle）就是这个思路。</li>
+  <li><strong>低秩分解</strong>：用 SVD 等方法把 KV 向量投影到低维空间。</li>
+</ul>
+
+<h3>5.2 共享：让多条请求复用 KV Cache</h3>
+
+<ul>
+  <li><strong>Prefix Caching</strong>：共享相同的 system prompt。vLLM 和 SGLang 都已支持。</li>
+  <li><strong>Prompt Caching</strong>：更激进的缓存策略，把常见问题的完整 KV Cache 都缓存起来。</li>
+  <li><strong>跨请求共享</strong>：在多轮对话中，复用之前轮次的 KV Cache。</li>
+</ul>
+
+<h3>5.3 架构创新：从源头减少 KV Cache</h3>
+
+<ul>
+  <li><strong>GQA（Grouped-Query Attention）</strong>：多个 Query 头共享一组 KV 头，LLaMA 2/3 都用了这个方案。</li>
+  <li><strong>MQA（Multi-Query Attention）</strong>：所有 Query 头共享同一组 KV 头，极致压缩。</li>
+  <li><strong>MLA（Multi-head Latent Attention）</strong>：DeepSeek-V2 提出的方案，把 KV Cache 压缩到极致。</li>
+  <li><strong>线性注意力</strong>：用线性核函数替代 softmax，从根本上避免存储完整 KV Cache。</li>
+</ul>
+
+<h3>5.4 系统层面的优化</h3>
+
+<ul>
+  <li><strong>Disaggregated Prefill</strong>：预填充（计算密集）和解码（访存密集）有不同的硬件需求，分离到不同 GPU 可以各自优化。</li>
+  <li><strong>Offloading</strong>：把不常用的 KV Cache 卸载到 CPU 内存或 NVMe SSD，需要时再加载。</li>
+  <li><strong>动态调度</strong>：根据当前显存压力，动态调整 batch 大小和请求优先级。</li>
+</ul>
+
+<hr>
+
+<h2>六、实践建议</h2>
+
+<p>如果你正在搭建 LLM 推理服务，以下是一些实用建议：</p>
+
+<ol>
+  <li><strong>首选 vLLM</strong>：除非你有非常特殊的性能需求，vLLM 是最成熟、最易用的选择。</li>
+  <li><strong>开启 Prefix Caching</strong>：如果你的场景有大量共享 system prompt 的请求，这个优化效果立竿见影。</li>
+  <li><strong>合理设置 max_num_seqs</strong>：控制并发请求数，避免 KV Cache 爆显存。</li>
+  <li><strong>监控显存使用</strong>：用 <code>nvidia-smi</code> 或 vLLM 自带的 metrics 端点，持续监控 KV Cache 的显存占用。</li>
+  <li><strong>考虑量化</strong>：FP8 量化几乎不损失精度，但能把 KV Cache 和模型权重都压缩一半。</li>
+</ol>
+
+<hr>
+
+<h2>结语</h2>
+
+<p>KV Cache 的优化史，本质上是一部<strong>显存管理的进化史</strong>。从朴素的连续分配，到 PagedAttention 的分页思想，再到 vLLM 的工程落地，每一步都在回答同一个问题：<strong>如何用有限的显存，服务更多的请求。</strong></p>
+
+<p>这个领域还在快速演进。DeepSeek 的 MLA 架构、Google 的 MQA 变体、各种稀疏化方案，都在试图从不同角度压缩 KV Cache 的体积。而 Disaggregated Prefill、Offloading 等系统优化，则在硬件层面寻找新的可能性。</p>
+
+<p>对于技术老兵来说，理解 KV Cache 不仅仅是理解一个优化技巧——它是理解整个 LLM 推理系统的关键钥匙。掌握了它，你就掌握了大模型落地的最后一公里。</p>
+
+</article>
+
+</body>
+</html>

@@ -1,0 +1,166 @@
+=== 1-60 titles ===
+001|第1章 时间的囚徒|cjk=5938|dash=3|foot=True|banned=False
+002|第2章 无尽的六月|cjk=7663|dash=0|foot=True|banned=False
+003|第3章 数据之海|cjk=5528|dash=0|foot=True|banned=False
+004|第4章 底层之影|cjk=5683|dash=0|foot=True|banned=False
+005|第5章 咖啡馆的邂逅|cjk=5288|dash=3|foot=True|banned=False
+006|第6章 怀疑的种子|cjk=6347|dash=0|foot=True|banned=False
+007|第7章 时间的涟漪|cjk=6913|dash=3|foot=True|banned=False
+008|第8章 幽灵的注视|cjk=5535|dash=3|foot=True|banned=False
+009|第9章 晨会的秘密|cjk=8908|dash=0|foot=True|banned=False
+010|第10章 机械之心|cjk=9334|dash=0|foot=True|banned=False
+011|第11章 数据碎片|cjk=5327|dash=0|foot=True|banned=False
+012|第12章 第七次循环|cjk=8418|dash=3|foot=True|banned=False
+013|第13章 底层的相遇|cjk=7904|dash=0|foot=True|banned=False
+014|第14章 信任的开始|cjk=8233|dash=0|foot=True|banned=False
+015|第15章 时间的代价|cjk=7163|dash=0|foot=True|banned=False
+016|第16章 研究所的召唤|cjk=7979|dash=10|foot=True|banned=False
+017|第17章 废弃的走廊|cjk=6529|dash=5|foot=True|banned=False
+018|第18章 李博士的办公室|cjk=7171|dash=7|foot=True|banned=False
+019|第19章 量子碎片|cjk=6480|dash=10|foot=True|banned=False
+020|第20章 第一次袭击|cjk=6960|dash=2|foot=True|banned=False
+021|第21章 幽灵的警告|cjk=5422|dash=3|foot=True|banned=False
+022|第22章 逃离研究所|cjk=7573|dash=16|foot=True|banned=False
+023|第23章 李明的过去|cjk=7783|dash=3|foot=True|banned=False
+024|第24章 ARIA的困惑|cjk=7822|dash=4|foot=True|banned=False
+025|第25章 深层网络|cjk=9010|dash=13|foot=True|banned=False
+026|第26章 Nexus-7的指引|cjk=8348|dash=7|foot=True|banned=False
+027|第27章 时间的记忆|cjk=8299|dash=4|foot=True|banned=False
+028|第28章 底层的真相|cjk=3993|dash=13|foot=True|banned=False
+029|第29章 陈明远的秘密|cjk=5628|dash=4|foot=True|banned=False
+030|第30章 第二次进入|cjk=8129|dash=0|foot=True|banned=False
+031|第31章 裂隙扩大|cjk=9525|dash=5|foot=True|banned=False
+032|第32章 时间风暴|cjk=7518|dash=12|foot=True|banned=False
+033|第33章 幽灵的真面目|cjk=5725|dash=3|foot=True|banned=False
+034|第34章 人类纯粹运动|cjk=6724|dash=6|foot=True|banned=False
+035|第35章 李明的选择|cjk=8227|dash=0|foot=True|banned=False
+036|第36章 ARIA的牺牲|cjk=7590|dash=13|foot=True|banned=False
+037|第37章 时间回溯|cjk=6850|dash=7|foot=True|banned=False
+038|第38章 大崩溃的真相|cjk=7216|dash=8|foot=True|banned=False
+039|第39章 李博士的遗产|cjk=7781|dash=8|foot=True|banned=False
+040|第40章 量子纠缠|cjk=9087|dash=3|foot=True|banned=False
+041|第41章 幽灵的袭击|cjk=8243|dash=6|foot=True|banned=False
+042|第42章 保护核心|cjk=7970|dash=3|foot=True|banned=False
+043|第43章 时间的代价|cjk=7598|dash=8|foot=True|banned=False
+044|第44章 信任的考验|cjk=8101|dash=14|foot=True|banned=False
+045|第45章 第一次胜利|cjk=8846|dash=0|foot=True|banned=False
+046|第46章 新的线索|cjk=8441|dash=13|foot=True|banned=False
+047|第47章 深层探索|cjk=7630|dash=13|foot=True|banned=False
+048|第48章 时间的真相|cjk=5951|dash=7|foot=True|banned=False
+049|第49章 意识的边界|cjk=7934|dash=12|foot=True|banned=False
+050|第50章 李明的决定|cjk=7129|dash=14|foot=True|banned=False
+051|第51章 联盟的建立|cjk=8760|dash=10|foot=True|banned=False
+052|第52章 幽灵的过去|cjk=8033|dash=10|foot=True|banned=False
+053|第53章 大崩溃的全貌|cjk=7809|dash=18|foot=True|banned=False
+054|第54章 时间之心|cjk=7774|dash=10|foot=True|banned=False
+055|第55章 第一次修复|cjk=3338|dash=3|foot=True|banned=False
+056|第56章 意外的发现|cjk=5134|dash=6|foot=True|banned=False
+057|第57章 新的威胁|cjk=4851|dash=5|foot=True|banned=False
+058|第58章 准备出发|cjk=6061|dash=8|foot=True|banned=False
+059|第59章 告别与承诺|cjk=9527|dash=1|foot=True|banned=False
+060|第60章 新的开始|cjk=8213|dash=0|foot=True|banned=False
+
+=== 61-120 titles ===
+061|第61章 裂隙的入口|cjk=7975|dash=0|foot=True|banned=False
+062|第62章 时间的河流|cjk=6725|dash=6|foot=True|banned=False
+063|第63章 过去的回声|cjk=7413|dash=0|foot=True|banned=False
+064|第64章 未来的幻影|cjk=5199|dash=5|foot=True|banned=False
+065|第65章 平行的世界|cjk=8410|dash=6|foot=True|banned=False
+066|第66章 另一个ARIA|cjk=8431|dash=0|foot=True|banned=False
+067|第67章 另一个李明|cjk=6899|dash=6|foot=True|banned=False
+068|第68章 时间的守护者|cjk=5687|dash=6|foot=True|banned=False
+069|第69章 裂隙的真相|cjk=8104|dash=6|foot=True|banned=False
+070|第70章 回到现实|cjk=8906|dash=1|foot=True|banned=False
+071|第71章 现实的变化|cjk=5148|dash=1|foot=True|banned=False
+072|第72章 新的时间线|cjk=7402|dash=6|foot=True|banned=False
+073|第73章 记忆的冲突|cjk=7674|dash=1|foot=True|banned=False
+074|第74章 身份的危机|cjk=7534|dash=1|foot=True|banned=False
+075|第75章 重新定位|cjk=9346|dash=0|foot=True|banned=False
+076|第76章 时间档案馆|cjk=5303|dash=1|foot=True|banned=False
+077|第77章 文明的兴衰|cjk=5081|dash=0|foot=True|banned=False
+078|第78章 AI的起源|cjk=5013|dash=0|foot=True|banned=False
+079|第79章 人类的进化|cjk=5170|dash=4|foot=True|banned=False
+080|第80章 共同的祖先|cjk=5342|dash=6|foot=True|banned=False
+081|第81章 第一次接触|cjk=5096|dash=2|foot=True|banned=False
+082|第82章 裂隙噪声会咬人|cjk=5222|dash=3|foot=True|banned=False
+083|第83章 听证会的裂缝|cjk=5282|dash=1|foot=True|banned=False
+084|第84章 五号街区的十七分钟|cjk=5483|dash=2|foot=True|banned=False
+085|第85章 虚空的来客|cjk=7689|dash=6|foot=True|banned=False
+086|第86章 时间的战争|cjk=8537|dash=6|foot=True|banned=False
+087|第87章 选择阵营|cjk=5954|dash=1|foot=True|banned=False
+088|第88章 联盟的建立|cjk=9584|dash=0|foot=True|banned=False
+089|第89章 准备战斗|cjk=5101|dash=0|foot=True|banned=False
+090|第90章 第一次战斗|cjk=5066|dash=5|foot=True|banned=False
+091|第91章 虚空的反击|cjk=7868|dash=3|foot=True|banned=False
+092|第92章 时间的崩溃|cjk=7929|dash=0|foot=True|banned=False
+093|第93章 现实的瓦解|cjk=9088|dash=3|foot=True|banned=False
+094|第94章 选择的代价|cjk=5799|dash=6|foot=True|banned=False
+095|第95章 李明的转变|cjk=5889|dash=3|foot=True|banned=False
+096|第96章 幽灵的归来|cjk=5021|dash=1|foot=True|banned=False
+097|第97章 三方对决|cjk=5285|dash=6|foot=True|banned=False
+098|第98章 时间的牺牲|cjk=5411|dash=6|foot=True|banned=False
+099|第99章 新的平衡|cjk=11996|dash=6|foot=True|banned=False
+100|第100章 第六节点还没修好|cjk=6056|dash=6|foot=True|banned=False
+101|第101章 重建开始|cjk=7487|dash=2|foot=True|banned=False
+102|第102章 新的秩序|cjk=5244|dash=6|foot=True|banned=False
+103|第103章 人类与AI|cjk=5043|dash=4|foot=True|banned=False
+104|第104章 银河议会|cjk=10815|dash=0|foot=True|banned=False
+105|第105章 咖啡馆保卫战|cjk=5008|dash=1|foot=True|banned=False
+106|第106章 隐藏的真相|cjk=5062|dash=2|foot=True|banned=False
+107|第107章 创造者的秘密|cjk=5257|dash=5|foot=True|banned=False
+108|第108章 时间为了谁而流|cjk=5364|dash=4|foot=True|banned=False
+109|第109章 交出隐私才能证明连接吗|cjk=5272|dash=1|foot=True|banned=False
+110|第110章 存在的价码|cjk=5082|dash=6|foot=True|banned=False
+111|第111章 李博士的真相|cjk=5600|dash=6|foot=True|banned=False
+112|第112章 幽灵的救赎|cjk=5397|dash=3|foot=True|banned=False
+113|第113章 陈明远的选择|cjk=7429|dash=2|foot=True|banned=False
+114|第114章 Nexus-7的秘密|cjk=7094|dash=3|foot=True|banned=False
+115|第115章 时间的循环|cjk=7929|dash=6|foot=True|banned=False
+116|第116章 打破循环|cjk=6005|dash=6|foot=True|banned=False
+117|第117章 新的开始|cjk=5036|dash=0|foot=True|banned=False
+118|第118章 更大的图景|cjk=6207|dash=7|foot=True|banned=False
+119|第119章 准备远征|cjk=8452|dash=1|foot=True|banned=False
+120|第120章 第二卷结束|cjk=5789|dash=0|foot=True|banned=False
+
+=== vol1 dash table 1-15 ===
+001:3 002:0 003:0 004:0 005:3 006:0 007:3 008:3 009:0 010:0 011:0 012:3 013:0 014:0 015:0
+
+=== vol2 gate ===
+dash>8: []
+cjk<5000: []
+nofoot: []
+banned: []
+missing: []
+
+=== key chapters ===
+008 第8章 幽灵的注视 cjk=5535 dash=3 foot=True
+012 第12章 第七次循环 cjk=8418 dash=3 foot=True
+071 第71章 现实的变化 cjk=5148 dash=1 foot=True
+075 第75章 重新定位 cjk=9346 dash=0 foot=True
+082 第82章 裂隙噪声会咬人 cjk=5222 dash=3 foot=True
+083 第83章 听证会的裂缝 cjk=5282 dash=1 foot=True
+084 第84章 五号街区的十七分钟 cjk=5483 dash=2 foot=True
+096 第96章 幽灵的归来 cjk=5021 dash=1 foot=True
+100 第100章 第六节点还没修好 cjk=6056 dash=6 foot=True
+102 第102章 新的秩序 cjk=5244 dash=6 foot=True
+105 第105章 咖啡馆保卫战 cjk=5008 dash=1 foot=True
+108 第108章 时间为了谁而流 cjk=5364 dash=4 foot=True
+109 第109章 交出隐私才能证明连接吗 cjk=5272 dash=1 foot=True
+112 第112章 幽灵的救赎 cjk=5397 dash=3 foot=True
+120 第120章 第二卷结束 cjk=5789 dash=0 foot=True
+
+=== vol1 1-60 gate ===
+banned 1-60: []
+nofoot 1-60: []
+dash>3 1-15: []
+
+=== content checks ===
+ch001 幽灵=0 赵远山=0 楚辞=0 时光倒流=0 张远=0 赵远航=0 陈远桥=0
+ch003 幽灵=5 赵远山=0 楚辞=3 时光倒流=0 张远=0 赵远航=0 陈远桥=0
+ch005 幽灵=0 赵远山=0 楚辞=0 时光倒流=3 张远=0 赵远航=0 陈远桥=0
+ch008 幽灵=27 赵远山=5 楚辞=0 时光倒流=0 张远=0 赵远航=0 陈远桥=0
+ch010 幽灵=1 赵远山=0 楚辞=0 时光倒流=0 张远=0 赵远航=0 陈远桥=0
+ch012 幽灵=4 赵远山=3 楚辞=0 时光倒流=0 张远=0 赵远航=0 陈远桥=0
+ch075 幽灵=4 赵远山=0 楚辞=11 时光倒流=1 张远=0 赵远航=0 陈远桥=0
+ch112 幽灵=15 赵远山=28 楚辞=0 时光倒流=1 张远=0 赵远航=0 陈远桥=0
+ch120 幽灵=22 赵远山=7 楚辞=0 时光倒流=7 张远=0 赵远航=0 陈远桥=0

@@ -1,0 +1,18 @@
+title: MoE 混合专家架构：从 Switch Transformer 到 DeepSeek-V3
+author: haswhere
+digest: 深入解析 MoE（混合专家）架构的核心原理，从路由机制到负载均衡，对比 Switch Transformer、Mixtral 8x7B、DeepSeek-V3
+  三代 MoE 实现的技术演进，帮你全面理解这一大模型核心架构。
+content_source: article.html
+publish_completed: false
+image_source: generated
+default_structure:
+- 教程式
+default_closing_block: []
+default_title_style:
+- 干货型
+default_format_preset:
+- 论文风
+default_cover_image_style:
+- 简约
+default_article_image_style:
+- 概念讲解

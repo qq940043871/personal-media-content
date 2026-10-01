@@ -1,0 +1,14 @@
+{
+  "name": "webchat-article-publish",
+  "version": "1.0.0",
+  "author": "haswhere",
+  "description": "微信公众号发布｜草稿箱｜API发布 — 将文章发布到微信公众号草稿箱，支持Markdown→HTML转换、封面上传、草稿创建。",
+  "license": "MIT",
+  "homepage": "https://github.com/haswhere/webchat-article-solo",
+  "tags": ["wechat", "公众号", "publish", "api"],
+  "permissions": ["filesystem", "network", "shell"],
+  "entryPoint": {
+    "type": "natural",
+    "path": "SKILL.md"
+  }
+}

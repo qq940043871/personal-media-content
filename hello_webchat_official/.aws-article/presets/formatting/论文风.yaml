@@ -1,0 +1,29 @@
+displayName: 论文风
+name: paper
+description: 朴素的学术论文风格，适合专业研究类账号
+styles:
+  a: color:#374151; text-decoration:underline;
+  p: font-size:15px; line-height:1.9; color:#111827; margin:0.6em 0; text-indent:2em;
+  u: text-decoration:underline; text-underline-offset:3px;
+  em: font-style:italic;
+  h1: font-size:20px; font-weight:bold; color:#111827; margin-bottom:20px; text-align:center;
+  h2: font-size:17px; font-weight:bold; color:#111827; margin:2em 0 0.8em;
+  h3: font-size:15px; font-weight:bold; color:#374151; margin:1.5em 0 0.6em;
+  h4: font-size:15px; font-weight:600; color:#4B5563; margin:1.2em 0 0.5em;
+  hr: 'border:none; border-top:1px solid #E5E7EB; margin:2em 0;'
+  li: margin-bottom:4px; line-height:1.7; color:#111827;
+  ol: padding-left:24px; margin:0.6em 0;
+  td: 'padding:6px 12px; border-bottom:1px solid #E5E7EB; text-align:center; color:#374151;'
+  th: 'padding:8px 12px; border-bottom:1px solid #111827; font-weight:bold; text-align:center; color:#111827;'
+  ul: padding-left:24px; margin:0.6em 0;
+  del: text-decoration:line-through; color:#9CA3AF;
+  img: 'max-width:100%; border:1px solid #E5E7EB; display:block; margin:0 auto;'
+  pre: 'background:#f9fafb; padding:16px; border:1px solid #D1D5DB; border-radius:4px; font-size:13px; line-height:1.8; overflow-x:auto;
+    color:#374151;'
+  code: 'color:#374151; background:#f3f4f6; padding:1px 4px; font-size:90%; border:1px solid #D1D5DB;'
+  table: 'width:100%; border-collapse:collapse; margin:1em 0; font-size:13px; border-top:2px solid #111827; border-bottom:2px
+    solid #111827;'
+  strong: font-weight:bold; color:#111827;
+  highlight: 'background:#f9fafb; padding:10px 14px; margin:1em 0; border:1px solid #E5E7EB;'
+  blockquote: 'border-left:2px solid #D1D5DB; padding:8px 16px; margin:1em 0; color:#6B7280; font-size:14px;'
+  figcaption: text-align:center; font-size:12px; color:#6B7280; margin-top:4px;

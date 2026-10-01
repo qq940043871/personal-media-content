@@ -1,0 +1,27 @@
+{
+  "stats": {
+    "61-120": {
+      "ok": 60,
+      "boiler": 0,
+      "meta": 0,
+      "no_footer": 0,
+      "scanned": 60
+    },
+    "121-300": {
+      "ok": 180,
+      "boiler": 0,
+      "meta": 0,
+      "no_footer": 0,
+      "scanned": 180
+    },
+    "341-480": {
+      "ok": 140,
+      "boiler": 0,
+      "meta": 0,
+      "no_footer": 0,
+      "scanned": 140
+    }
+  },
+  "issues": [],
+  "full_boiler": 0
+}

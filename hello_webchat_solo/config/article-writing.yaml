@@ -1,0 +1,44 @@
+article_category: 科技
+target_reader: 36岁技术老兵
+tone: 专业
+default_author: haswhere
+embeds:
+  profiles:
+    - name: ''
+      alias: ''
+  miniprograms:
+    - name: ''
+      path: pages/index/index
+      appid: ''
+      title: ''
+  related_articles:
+    manual: []
+    strategy: auto
+    auto_count: 3
+drafts_root: output/
+series_root: series/
+account_type: 科技
+image_density: 按需配图
+publish_method: draft
+published_root: posts/published/
+wechat_accounts: 1
+wechat_api_base: https://api.weixin.qq.com
+wechat_1_name: haswhere
+custom_structure:
+  - 教程式
+title_max_length: '15'
+update_frequency: 日更
+multi_image_count: 0
+need_open_comment: 1
+target_word_count: 1800-2500
+custom_title_style:
+  - 干货型
+  - 权威背书型
+custom_format_preset:
+  - 极简黑
+  - 论文风
+only_fans_can_comment: 0
+custom_cover_image_style:
+  - 简约
+custom_article_image_style:
+  - 概念讲解

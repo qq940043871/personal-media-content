@@ -1,0 +1,14 @@
+{
+  "name": "webchat-article-themes",
+  "version": "1.0.0",
+  "author": "haswhere",
+  "description": "公众号排版主题｜视觉风格切换 — 5套预定义视觉主题（科技蓝/极简黑白/温暖橙/商务深蓝/清新绿），用于文章HTML排版样式。",
+  "license": "MIT",
+  "homepage": "https://github.com/haswhere/webchat-article-solo",
+  "tags": ["wechat", "公众号", "themes", "styling", "visual"],
+  "permissions": ["filesystem"],
+  "entryPoint": {
+    "type": "natural",
+    "path": "SKILL.md"
+  }
+}
