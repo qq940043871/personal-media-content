@@ -2,7 +2,7 @@
 # 校验 blocks.jsonl 每块 b64 是否能干净解码为 UTF-8
 import json, base64, sys
 
-PATH = r"D:\ai_person\p000_0000_it\blog\_seed\blocks.jsonl"
+PATH = r"D:\ai_person\p000_0000_it\media\blog\_seed\blocks.jsonl"
 
 bad = []
 total = 0
