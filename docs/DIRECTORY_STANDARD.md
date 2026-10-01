@@ -42,8 +42,8 @@ hello_doubao_video/
 ├── README.md
 ├── docs/          # 提示词大全、合并方案
 ├── scripts/       # 去水印、合并 bat/py
-├── assets/        # 帧图、去水印图
-└── media/         # 成片与分段 mp4、merge_list.txt
+├── assets/        # 帧图、去水印图（运行时生成，不入库）
+└── media/         # merge_list.txt 入库；mp4 原件不入库
 ```
 
 ### hello_weixin_book
@@ -53,7 +53,7 @@ hello_weixin_book/
 ├── README.md
 ├── INDEX.md       # 作品分析清单
 ├── analyses/      # *分析.html
-└── assets/        # generated-images、outputs、.workbuddy
+└── assets/        # generated-images、outputs（.workbuddy 为本地工作笔记，不入库）
 ```
 
 ### hello_webchat_* / hello_feishu

@@ -16,10 +16,10 @@ hello_webchat_solo/
 │   ├── article-writing.yaml
 │   └── presets/               # 封面/格式/结构等预设
 ├── src/                       # agent 与流水线实现
-├── tests/
-├── output/                    # 生成文章（按时间戳目录）
-└── docs/
+└── tests/
 ```
+
+> `output/`（生成文章）与运行产生的 `docs/` 为运行时目录，不入库；首次运行自动生成。
 
 ## 常用命令
 
@@ -35,7 +35,7 @@ python main.py "RAG 系统架构设计" -p       # 发布到微信草稿
 
 ## 产出位置
 
-- 流水线产物：`output/<时间戳>_<主题>/`（`outline.md`、`draft.md`、`article.html`、`review.md`、`log.txt` 等）
+- 流水线产物：`output/<时间戳>_<主题>/`（`outline.md`、`draft.md`、`article.html`、`review.md`、`log.txt` 等；运行时生成，不入库）
 
 ## 与官方技能线的区别
 
@@ -48,4 +48,3 @@ python main.py "RAG 系统架构设计" -p       # 发布到微信草稿
 ## 文档
 
 - 程序架构：[CLAUDE.md](CLAUDE.md)
-- 生成示例：`output/20260715_*_RAG系统三大核心组件详解/`

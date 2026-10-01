@@ -218,10 +218,12 @@ output/
 │   ├── test_llm.py            # LLM 文章生成测试
 │   └── test_feishu.py         # 飞书发布测试
 │
-├── videos/                    # 输入视频 (按系列分子目录)
-├── output/                    # 处理产物 (按 video_name 分目录)
-└── models/                    # faster-whisper 本地模型缓存
+├── videos/                    # 输入视频 (按系列分子目录；原件不入库)
+├── output/                    # 处理产物 (按 video_name 分目录；不入库)
+└── models/                    # faster-whisper 本地模型缓存（不入库）
 ```
+
+> `videos/`、`output/`、`models/` 与 `.env` 为运行时目录/本地文件，全新 clone 中不存在；放入视频或运行后自动生成。
 
 ## 外部依赖
 

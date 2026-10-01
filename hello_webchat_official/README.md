@@ -7,12 +7,10 @@
 ```
 hello_webchat_official/
 ├── README.md
-├── docs/                      # 本线补充说明
-├── aws.env                    # 环境变量（勿提交密钥到公开库）
 ├── .aws-article/              # 运行配置与 presets
-│   ├── config.yaml
 │   ├── presets/               # 封面/格式/结构/标题等预设
-│   └── tmp/                   # 临时配置副本
+│   ├── config.yaml            # 真实配置（含密钥），仅存本地磁盘，不入库
+│   └── tmp/                   # 运行时临时目录，不入库
 ├── .claude/
 │   ├── skills/                # aws-wechat-article-* 技能包
 │   └── skills_self/           # 本线自维护技能
@@ -22,6 +20,8 @@ hello_webchat_official/
         ├── cover.png
         └── imgs/cover_prompt.md
 ```
+
+> `aws.env`（密钥）等本地文件不入库，按需放在本线目录下（见根 `.gitignore`）。
 
 ## 常用流程
 

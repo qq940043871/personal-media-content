@@ -22,6 +22,7 @@
 | 公众号官方 | [../hello_webchat_official/README.md](../hello_webchat_official/README.md) | `.claude/skills/**/SKILL.md` |
 | 公众号 Solo | [../hello_webchat_solo/README.md](../hello_webchat_solo/README.md) | `CLAUDE.md`（程序架构） |
 | 书评分析 | [../hello_weixin_book/README.md](../hello_weixin_book/README.md) | [INDEX.md](../hello_weixin_book/INDEX.md) |
+| 个人博客 | [../blog/index.html](../blog/index.html)（静态站） | `_seed/` 种子与生成脚本（依赖工作台知识库，`KB_ROOT` 可覆盖） |
 
 ## 小说作品索引
 
@@ -44,13 +45,19 @@
 
 | 类型 | 路径 |
 |------|------|
-| 小说章节正文 | `hello_novel/novels/*/chapters/` |
+| 小说章节正文 | `hello_novel/novels/*/chapters/`（time_rift 为 `novels/time_rift/novel/chapters/`） |
 | 小说过程稿（选题/大纲/审核） | `hello_novel/novels/*/process/`、`review/` |
 | 书评 HTML | `hello_weixin_book/analyses/` |
 | 公众号草稿 | `hello_webchat_official/drafts/` |
-| Solo 生成文章 | `hello_webchat_solo/output/` |
-| 飞书流水线产物 | `hello_feishu/output/`、`articles/` |
-| 短视频媒体 | `hello_doubao_video/media/` |
+| Solo 生成文章 | `hello_webchat_solo/output/`（运行时生成，不入库） |
+| 飞书流水线产物 | `hello_feishu/output/`（运行时生成，不入库）、`articles/` |
+| 短视频媒体 | `hello_doubao_video/media/`（mp4 原件不入库） |
+
+## 跨仓文档
+
+| 文档 | 位置 |
+|------|------|
+| 《工作台手册》（三域归属/发布流程/Git 约定） | 工作台 `D:\ai_person\p000_0000_it\it\knowledge-base\pages\00_overview\工作台手册.md` |
 
 ## 维护约定
 

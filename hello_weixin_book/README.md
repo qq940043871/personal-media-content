@@ -11,8 +11,7 @@ hello_weixin_book/
 ├── analyses/                # *分析.html / *时间线.html / *蒸馏.html / 总览
 └── assets/
     ├── generated-images/    # 生成图
-    ├── outputs/             # 海报等产出
-    └── .workbuddy/          # 历史工作笔记
+    └── outputs/             # 海报等产出
 ```
 
 ## 使用方式

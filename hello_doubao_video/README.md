@@ -13,12 +13,12 @@ hello_doubao_video/
 ├── scripts/
 │   ├── remove_watermark.py
 │   └── 一键合并视频.bat
-├── assets/
+├── assets/                    # 帧图、去水印图（运行时生成，不入库）
 │   ├── image/                 # 原始帧/图
 │   └── image_nowm/            # 去水印图
 └── media/
-    ├── merge_list.txt         # 合并清单
-    └── *.mp4                  # 分段与成片
+    ├── merge_list.txt         # 合并清单（入库）
+    └── *.mp4                  # 分段与成片（原件不入库）
 ```
 
 ## 常用流程
