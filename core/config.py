@@ -88,6 +88,9 @@ class Config:
     # lark-cli 的 Node 脚本路径（Windows 默认安装位置）
     LARK_CLI_RUN_JS = os.getenv('LARK_CLI_RUN_JS',
         r'C:\Program Files\nodejs\node_modules\@larksuite\cli\scripts\run.js')
+    # 飞书知识库映射（资产库 assets/feishu/<名称>/ 按名称移入对应 space）
+    # 格式：名称:space_id,名称2:space_id2；未配置的名称发布到云空间根目录
+    FEISHU_WIKI_SPACES = os.getenv('FEISHU_WIKI_SPACES', '')
 
     # ===== 微信公众号配置 =====
     WECHAT_APP_ID = os.getenv('WECHAT_APP_ID', '')
@@ -97,9 +100,19 @@ class Config:
     # 是否默认打开评论
     WECHAT_OPEN_COMMENT = os.getenv('WECHAT_OPEN_COMMENT', '0')
 
+    # ===== 抖音配置（Playwright 自动化创作者后台；登录态为 Cookie 文件，不入库）=====
+    STORAGE_DOUYIN = os.path.join(BASE_DIR, os.getenv('STORAGE_DOUYIN', 'storage/douyin'))
+    DOUYIN_COOKIES_FILE = os.path.join(
+        BASE_DIR, os.getenv('DOUYIN_COOKIES_FILE') or os.path.join('storage', 'douyin', 'cookies.json'))
+    DOUYIN_HEADLESS = os.getenv('DOUYIN_HEADLESS', 'false').lower() == 'true'
+    DOUYIN_UPLOAD_TIMEOUT = int(os.getenv('DOUYIN_UPLOAD_TIMEOUT', '600'))
+
     # ===== 存储路径配置 =====
     # 统一素材/产物根目录
     STORAGE_BASE = os.path.join(BASE_DIR, os.getenv('STORAGE_BASE', 'storage'))
+
+    # 待发布资产库（tools/ 的数据契约：drafts → 发布 → published）
+    ASSETS_BASE = os.path.join(BASE_DIR, os.getenv('ASSETS_BASE', 'assets'))
 
     # 视频相关
     STORAGE_VIDEO_INPUT = os.path.join(BASE_DIR, os.getenv('STORAGE_VIDEO_INPUT', 'storage/videos_input'))
@@ -120,6 +133,7 @@ class Config:
             cls.STORAGE_VIDEO_OUTPUT,
             cls.STORAGE_ARTICLES,
             cls.STORAGE_NOVELS,
+            cls.STORAGE_DOUYIN,
             cls.ASR_LOCAL_DOWNLOAD_ROOT,
         ]
         for d in dirs:

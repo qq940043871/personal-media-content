@@ -14,7 +14,7 @@ __pycache__/
 models/
 **/output/
 **/videos/
-hello_doubao_video/assets/
+assets/douyin/assets/
 **/*.mp4
 **/*.mp3
 **/*.zip
@@ -27,6 +27,8 @@ storage/articles/
 storage/novels/
 storage/videos_input/
 storage/videos_output/
+# 抖音登录态 Cookie（等密钥，永不入库）
+storage/douyin/
 
 # Node / 日志 / 系统文件
 node_modules/
@@ -50,5 +52,5 @@ desktop.ini
 *secret*
 
 # 应用私有配置（含真实密钥，仅存磁盘；模板为 config.yaml.example）
-hello_webchat_official/.aws-article/config.yaml
-hello_webchat_official/.aws-article/tmp/
+**/.aws-article/config.yaml
+**/.aws-article/tmp/

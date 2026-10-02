@@ -33,6 +33,15 @@ def build_parser():
   %(prog)s wechat publish --title "标题" --content-file doc.md --cover cover.jpg --publish-now  一键发布
   %(prog)s wechat drafts list                              草稿列表
   %(prog)s wechat upload-image cover.jpg --permanent        上传封面图
+  %(prog)s douyin login                                    抖音扫码登录（首次使用）
+  %(prog)s douyin publish --video-file v.mp4 --title "标题" --tags 生活  上传抖音
+  %(prog)s publish --title "标题" --content-file doc.md --platforms feishu wechat  多平台图文
+  %(prog)s publish --title "标题" --video v.mp4 --platforms douyin  多平台含视频
+  %(prog)s asset ls --platform wechat --json               待发布资产清单
+  %(prog)s asset publish --file assets/wechat/drafts/x.md  发布资产并自动归档
+  %(prog)s wechat compose "RAG系统架构设计" -p            AI 写作助手生成并进草稿箱
+  %(prog)s pipeline video-article                          教学视频→文章（断点续跑）
+  %(prog)s pipeline status "系列/视频名"                   查看流水线步骤状态
   %(prog)s storage stats                         存储统计
   %(prog)s storage list videos                   列出视频
         """

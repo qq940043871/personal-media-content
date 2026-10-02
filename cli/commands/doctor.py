@@ -102,6 +102,15 @@ def _collect_checks(live):
     add('lark-cli run.js', os.path.exists(lark), lark if os.path.exists(lark)
         else f'不存在: {lark}（npm i -g @larksuite/cli 或设 LARK_CLI_RUN_JS）')
 
+    # 抖音为可选平台：仅在已配置登录态时检查其依赖，避免打扰未用抖音的环境
+    if os.path.exists(config.DOUYIN_COOKIES_FILE):
+        try:
+            import playwright  # noqa: F401
+            add('Playwright（抖音）', True, '已安装')
+        except ImportError:
+            add('Playwright（抖音）', False,
+                '已配置抖音登录态但缺 playwright：pip install playwright && playwright install chromium')
+
     # ---- 5. 数据库 ----
     try:
         from core.task_manager import TaskManager
@@ -128,10 +137,11 @@ def _collect_checks(live):
             add('LLM 探活', False, f"{type(e).__name__}: {str(e)[:200]}")
 
         try:
-            from core.publisher_base import MultiPlatformPublisher
+            from tools.publisher_base import MultiPlatformPublisher
             mp = MultiPlatformPublisher()
             for pid, err in mp.init_errors.items():
-                add(f'平台 {pid}', False, err, warn_if_fail=(pid == 'wechat' and '未配置' in err))
+                # 未配置的可选平台（如微信凭据缺失、抖音未扫码）降级为 WARN
+                add(f'平台 {pid}', False, err, warn_if_fail=('未配置' in err))
             for pid, health in mp.health_check_all().items():
                 add(f'平台 {pid} 健康', health.success,
                     '连通正常' if health.success else (health.error or '未知原因')[:200])

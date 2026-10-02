@@ -2,15 +2,18 @@
 
 适用于本仓库所有业务线与平台层，保证「过程 / 内容 / 说明 / 素材」可分离、可检索。
 
-## 0. 平台层结构（core / cli / tests / dashboard）
+## 0. 平台层结构（core / tools / cli / tests / dashboard / assets）
 
 平台层代码与业务线分离，约定：
 
 ```
-core/                # 共享能力层
+core/                # 对内能力层（被 import 的库）
 ├── providers/       # 模型接入（registry 解析 + llm/asr 客户端）——新模型能力放这里
-├── publisher_base.py + feishu/wechat_publisher.py   # 发布契约与实现
-└── （storage/task/asset/video/story 等域模块平铺）
+└── （storage/task/asset/project/inventory/video/story 等域模块平铺）
+tools/               # 对外动作层（发布工具，可独立运行；skill 化契约见 tools/README.md）
+├── publisher_base.py + feishu/wechat/douyin_publisher.py + novel_publisher.py
+└── asset_store.py   # 待发布资产库（状态流转）+ lark_helper.js
+assets/              # 待发布资产库：平台 × drafts/published（tools 的数据契约，入库）
 cli/commands/        # media-cli 的命令域，一域一模块，含 register(subparsers)
 tests/               # 平台层 pytest；业务线手工冒烟脚本仍留在各线 tests/
 dashboard/templates/ # 看板 HTML 模板（与 app.py 分离）
@@ -19,7 +22,7 @@ dashboard/templates/ # 看板 HTML 模板（与 app.py 分离）
 平台层变更规则：
 
 - 新模型 provider：只改根 `.env` 注册表（见 `.env.example`），不改代码；新「能力类型」（如 tts）才动 `core/providers/registry.py`
-- 新发布平台：实现 `core/publisher_base.BasePublisher` 并在 `_load_publisher` 登记
+- 新发布平台：实现 `tools/publisher_base.BasePublisher` 并在 `_load_publisher` 登记（完整步骤见 tools/README.md）
 - 新 CLI 命令：在 `cli/commands/` 对应域模块加 `cmd_*` + `register()`；顶层入口 `media-cli.py` 不加业务逻辑
 - 平台行为回归：`python -m pytest tests/`（依赖 `requirements-dev.txt`）
 
@@ -38,28 +41,28 @@ dashboard/templates/ # 看板 HTML 模板（与 app.py 分离）
 
 ## 2. 业务线落地结构
 
-### hello_novel
+### assets/novels（创作资产：每本小说/主题一个文件夹）
 
 ```
-hello_novel/
+assets/novels/
 ├── README.md
-├── guides/                      # 通用方法与技巧（原 自媒体成长之路）
-└── novels/
-    └── <book_id>/
-        ├── README.md            # 作品入口
-        ├── CLAUDE.md / .claude/ # 技能与约定（若有）
-        ├── process/             # 选题、设定、大纲、审核
-        ├── chapters/            # 章节正文
-        ├── review/              # 连贯性/质量审查（若有）
-        ├── source/              # 原著与合集
-        ├── scripts/             # 上传等脚本
-        └── meta/                # 总结与杂项
+├── guides/                      # 通用方法与技巧（文集）
+└── <book_id>/                   # 小说书目（含 chapters/ 或 novel/chapters/）
+    ├── README.md                # 作品入口
+    ├── CLAUDE.md / .claude/     # 技能与约定（若有）
+    ├── process/                 # 选题、设定、大纲、审核
+    ├── chapters/                # 章节正文（time_rift 为 novel/chapters/）
+    ├── review/                  # 连贯性/质量审查（若有）
+    ├── source/                  # 原著与合集
+    ├── scripts/                 # 上传等脚本
+    └── meta/                    # 总结与杂项
+（无章节目录的子目录为主题/文集，如 人物特稿/、母亲的灶台/：短视频脚本与分镜稿）
 ```
 
-### hello_doubao_video
+### assets/douyin
 
 ```
-hello_doubao_video/
+assets/douyin/
 ├── README.md
 ├── docs/          # 提示词大全、合并方案
 ├── scripts/       # 去水印、合并 bat/py
@@ -67,23 +70,16 @@ hello_doubao_video/
 └── media/         # merge_list.txt 入库；mp4 原件不入库
 ```
 
-### hello_weixin_book
+### hello_weixin_book（已迁出）
 
-```
-hello_weixin_book/
-├── README.md
-├── INDEX.md       # 作品分析清单
-├── analyses/      # *分析.html
-└── assets/        # generated-images、outputs（.workbuddy 为本地工作笔记，不入库）
-```
+书评分析线已于 2026-10 整体迁出至上游 `personal-read-book` 仓库（含 analyses/*.html），
+本仓不再维护该结构。
 
-### hello_webchat_* / hello_feishu
+### .claude/skills 与 core（原 hello_wechat / hello_feishu，2026-10 并入）
 
-代码流水线目录保持程序可运行结构，仅约定：
-
-- 入口说明必须有 `README.md`（或等价 `CLAUDE.md`，并在根索引登记）
-- 技能集中在 `.claude/skills/`（或 `skills_self/`）
-- 生成稿进 `drafts/` 或 `output/`，不与技能配置混放
+- 技能包集中在根 `.claude/skills/<技能名>/`（含 SKILL.md 与自带脚本），入口见 `.claude/skills/README.md`
+- 程序能力进 `core/`（如 `core/wechat_agent/`、`core/video_to_article.py`），生成稿进 `assets/` 或 `storage/`
+- 凭据（`aws.env`、`.aws-article/config.yaml`）在仓库根，永不入库
 
 ## 3. 文档写法（中文技术文档）
 

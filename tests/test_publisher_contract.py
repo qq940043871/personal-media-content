@@ -2,11 +2,11 @@
 
 import pytest
 
-from core.publisher_base import (
+from tools.publisher_base import (
     BasePublisher, MultiPlatformPublisher, PublishResult, _load_publisher,
 )
-from core.feishu_publisher import FeishuPublisher
-from core.wechat_publisher import WechatPublisher
+from tools.feishu_publisher import FeishuPublisher
+from tools.wechat_publisher import WechatPublisher
 
 
 def test_publish_result_dict_compat():
@@ -45,7 +45,7 @@ def test_wechat_check_config_unconfigured(monkeypatch):
 
 
 def test_feishu_check_config_missing_cli(monkeypatch):
-    from core.feishu_publisher import FeishuPublisher
+    from tools.feishu_publisher import FeishuPublisher
     pub = FeishuPublisher()
     monkeypatch.setattr(type(pub).__mro__[0], 'health_check', pub.health_check, raising=False)
     # 直接构造一个指向不存在路径的发布器

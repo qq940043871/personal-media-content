@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI 内容生产中台 — 总览</title>
+  <title>创作统计 — AI 内容生产中台</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -12,16 +12,18 @@
               color: white; padding: 24px 32px; }
     .header h1 { font-size: 24px; margin-bottom: 4px; }
     .header p { opacity: 0.9; font-size: 14px; }
+    .header .updated { float: right; font-size: 12px; opacity: 0.8; margin-top: 6px; }
     .nav { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 0 32px; }
     .nav a { display: inline-block; padding: 14px 20px; color: #555; text-decoration: none;
              border-bottom: 3px solid transparent; font-size: 14px; }
     .nav a.active { color: #667eea; border-bottom-color: #667eea; font-weight: 600; }
     .container { max-width: 1200px; margin: 0 auto; padding: 24px 32px; }
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
              gap: 16px; margin-bottom: 24px; }
     .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     .card .label { font-size: 13px; color: #888; margin-bottom: 8px; }
     .card .value { font-size: 28px; font-weight: 700; color: #1a1a2e; }
+    .card .value small { font-size: 14px; font-weight: 500; color: #666; }
     .card .sub { font-size: 12px; color: #aaa; margin-top: 4px; }
     .card.green .value { color: #10b981; }
     .card.red .value { color: #ef4444; }
@@ -40,20 +42,43 @@
     .status.pending { background: #fef3c7; color: #92400e; }
     .status.failed { background: #fee2e2; color: #991b1b; }
     .status.skipped { background: #e5e7eb; color: #374151; }
+    .empty { color: #aaa; font-size: 13px; padding: 14px 0; text-align: center; }
+    .bar { height: 8px; border-radius: 4px; background: #eef2ff; margin-top: 6px; overflow: hidden; }
+    .bar i { display: block; height: 100%; background: linear-gradient(90deg, #667eea, #8b5cf6); }
   </style>
 </head>
 <body>
   <div class="header">
+    <span class="updated" id="inv-updated"></span>
     <h1>🎬 AI 内容生产中台</h1>
-    <p>短视频 · 图文文章 · 长篇小说 · 全链路内容生产管理</p>
+    <p>创作统计 · 内容资产总览（生成与发布由 AI agent 执行，这里看结果）</p>
   </div>
   <div class="nav">
-    <a href="/" class="active">📊 总览</a>
+    <a href="/" class="active">📊 创作统计</a>
+    <a href="/workbench">🚀 项目工作台</a>
     <a href="/tasks">📋 任务中心</a>
     <a href="/assets">📦 素材库</a>
   </div>
   <div class="container">
-    <div class="cards" id="stats-cards"></div>
+    <div class="cards" id="inv-cards"></div>
+
+    <div class="section">
+      <h2>📚 小说（创作类）</h2>
+      <table>
+        <thead><tr><th>书名</th><th>章节数</th><th>字数</th><th>篇幅占比</th><th>最近更新</th></tr></thead>
+        <tbody id="novels-table"></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>📦 发布资产（编写类产物 · assets/）</h2>
+      <table>
+        <thead><tr><th>平台</th><th>状态</th><th>文件</th><th>更新时间</th></tr></thead>
+        <tbody id="assets-table"></tbody>
+      </table>
+    </div>
+
+    <div class="cards" id="run-cards"></div>
 
     <div class="section">
       <h2>🕐 最近任务</h2>
@@ -65,21 +90,71 @@
   </div>
 
 <script>
+function esc(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ===== 创作统计 =====
+async function loadInventory() {
+  const inv = await (await fetch('/api/inventory')).json();
+  const n = inv.novels, ast = inv.assets, pub = inv.publish;
+
+  document.getElementById('inv-updated').textContent = '更新于 ' + inv.generated_at_str;
+
+  const rec = pub.records || {};
+  const publishTotal = (pub.feishu_published || 0) + (rec.success || 0);
+  document.getElementById('inv-cards').innerHTML = `
+    <div class="card purple"><div class="label">小说（创作类）</div>
+      <div class="value">${n.total_books}<small> 本</small></div>
+      <div class="sub">共 ${n.total_chapters} 章 · ${n.total_words_wan} 万字</div></div>
+    <div class="card blue"><div class="label">发布资产（编写类）</div>
+      <div class="value">${ast.total}<small> 项</small></div>
+      <div class="sub">待发 ${ast.drafts} · 已发 ${ast.published}（assets/）</div></div>
+    <div class="card"><div class="label">书评分析</div>
+      <div class="value">${inv.analyses_count}<small> 篇</small></div>
+      <div class="sub">（已迁出至 personal-read-book）</div></div>
+    <div class="card"><div class="label">主题/文集</div>
+      <div class="value">${inv.family.files}<small> 份</small></div>
+      <div class="sub">${inv.family.themes} 个主题 · assets/novels</div></div>
+    <div class="card green"><div class="label">成片</div>
+      <div class="value">${inv.videos_output}<small> 条</small></div>
+      <div class="sub">storage/videos_output</div></div>
+    <div class="card green"><div class="label">发布记录</div>
+      <div class="value">${publishTotal}<small> 次</small></div>
+      <div class="sub">飞书批量 ${pub.feishu_published || 0} · 平台记录 成功${rec.success || 0}/失败${rec.failed || 0}</div></div>
+  `;
+
+  const maxWords = Math.max(...n.books.map(b => b.words), 1);
+  document.getElementById('novels-table').innerHTML = n.books.map(b => `
+    <tr>
+      <td><strong>${esc(b.book)}</strong></td>
+      <td>${b.chapters} 章</td>
+      <td>${b.words_wan} 万字</td>
+      <td style="min-width:160px"><div class="bar"><i style="width:${Math.round(b.words / maxWords * 100)}%"></i></div></td>
+      <td>${b.updated_at_str}</td>
+    </tr>`).join('') || '<tr><td colspan="5" class="empty">assets/novels/ 下没有小说正文</td></tr>';
+
+  document.getElementById('assets-table').innerHTML = ast.items.map(f => `
+    <tr>
+      <td>${esc(f.platform)}${f.space ? '/' + esc(f.space) : ''}</td>
+      <td><span class="status ${f.status === 'drafts' ? 'pending' : 'done'}">${f.status}</span></td>
+      <td>${esc(f.file)}</td>
+      <td>${f.updated_at_str}</td>
+    </tr>`).join('') || '<tr><td colspan="4" class="empty">资产库为空（agent 生成内容后写入 assets/**/drafts/ 自动出现）</td></tr>';
+}
+
+// ===== 生产运行统计（次要）=====
 async function loadStats() {
   const res = await fetch('/api/stats');
   const data = await res.json();
   const t = data.tasks;
   const a = data.assets;
-  const s = data.storage;
 
-  document.getElementById('stats-cards').innerHTML = `
+  document.getElementById('run-cards').innerHTML = `
     <div class="card blue"><div class="label">任务总数</div><div class="value">${t.total}</div><div class="sub">今日完成 ${t.today_done} · 失败 ${t.today_failed}</div></div>
     <div class="card green"><div class="label">已完成任务</div><div class="value">${t.by_status.done || 0}</div><div class="sub">平均耗时 ${t.avg_duration_seconds}s</div></div>
     <div class="card"><div class="label">待处理</div><div class="value">${t.by_status.pending || 0}</div><div class="sub">运行中 ${t.by_status.running || 0}</div></div>
     <div class="card purple"><div class="label">素材资产</div><div class="value">${a.total}</div><div class="sub">${a.tag_count} 个标签 · ${a.total_size_mb} MB</div></div>
-    <div class="card green"><div class="label">输入视频</div><div class="value">${s.videos_input}</div><div class="sub">videos_input</div></div>
-    <div class="card blue"><div class="label">文章数量</div><div class="value">${s.articles}</div><div class="sub">articles</div></div>
-    <div class="card"><div class="label">小说项目</div><div class="value">${s.novel_projects}</div><div class="sub">novels</div></div>
   `;
 }
 
@@ -90,17 +165,18 @@ async function loadRecentTasks() {
   tbody.innerHTML = data.tasks.map(t => `
     <tr>
       <td><span class="status ${t.status}">${t.status}</span></td>
-      <td>${t.name}</td>
-      <td>${t.task_type}</td>
+      <td>${esc(t.name)}</td>
+      <td>${esc(t.task_type)}</td>
       <td>${t.created_at_str}</td>
       <td>${t.duration ? t.duration.toFixed(1) + 's' : '-'}</td>
     </tr>
-  `).join('');
+  `).join('') || '<tr><td colspan="5" class="empty">暂无任务记录</td></tr>';
 }
 
+loadInventory();
 loadStats();
 loadRecentTasks();
-setInterval(() => { loadStats(); loadRecentTasks(); }, 10000);
+setInterval(() => { loadInventory(); loadStats(); loadRecentTasks(); }, 15000);
 </script>
 </body>
 </html>

@@ -1,7 +1,0 @@
-.uploads/
-.env
-*.log
-__pycache__/
-*.pyc
-config.yaml
-tmp/

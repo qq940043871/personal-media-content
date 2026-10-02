@@ -10,3 +10,7 @@ Flask>=3.0.0                # Web 数据看板
 
 # ===== 可选依赖（按需安装）=====
 # faster-whisper>=1.0.0     # 本地 ASR（大，首次启用时自动安装）
+# playwright>=1.40.0        # 抖音发布（浏览器自动化）：pip install playwright && playwright install chromium
+# langchain>=0.2.0 / langgraph>=0.1.0 / langchain-core>=0.2.0
+# pydantic>=2.0.0 / pydantic-settings>=2.0.0 / PyYAML>=6.0.0
+#                           # 公众号写作智能体（core/wechat_agent，media-cli.py wechat compose）

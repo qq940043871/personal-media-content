@@ -14,7 +14,7 @@
 
     # 注册素材
     am.register_asset(
-        path='hello_novel/novels/cangyuantu/chapters/8-续写-第1章.txt',
+        path='assets/novels/cangyuantu/chapters/8-续写-第1章.txt',
         asset_type='novel_chapter',
         project='沧元图',
         tags=['玄幻', '第一章', '主角出场'],

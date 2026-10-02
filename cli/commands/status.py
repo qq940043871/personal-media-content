@@ -4,11 +4,8 @@ import os
 
 
 # 业务线目录（media-cli status 探测用；新增业务线在此登记并同步根文档）
-BUSINESS_LINES = [
-    'hello_doubao_video', 'hello_feishu', 'hello_novel',
-    'hello_webchat_official', 'hello_webchat_solo', 'hello_weixin_book',
-    'family-life-video', 'publish_workbench',
-]
+# 2026-10 业务线已全部并入主工程：内容资产在 assets/，能力在 core/，技能在 .claude/skills/
+BUSINESS_LINES = []
 
 
 def cmd_status(args):
@@ -17,7 +14,7 @@ def cmd_status(args):
     from core.storage import Storage
     from core.task_manager import TaskManager
     from core.asset_manager import AssetManager
-    from core.publisher_base import MultiPlatformPublisher
+    from tools.publisher_base import MultiPlatformPublisher
 
     storage = Storage()
     storage_stats = storage.stats()

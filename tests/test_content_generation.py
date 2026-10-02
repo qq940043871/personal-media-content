@@ -71,18 +71,16 @@ def test_build_prompt_concat_no_double_period():
     assert '。。' not in prompts[0]
 
 
-def _get_llm_processor():
-    sys.path.insert(0, os.path.join(ROOT, 'hello_feishu'))
-    sys.path.insert(0, ROOT)
-    from modules.llm_processor import LLMProcessor
-    return LLMProcessor
+def _get_generator_cls():
+    from core.video_to_article import VideoArticleGenerator
+    return VideoArticleGenerator
 
 
 def test_empty_transcript_rejected():
     """空转写必须短路报错，而不是让模型自由发挥（幻觉假阳性根源）"""
-    LLMProcessor = _get_llm_processor()
+    VideoArticleGenerator = _get_generator_cls()
     import pytest
-    lp = LLMProcessor()
+    lp = VideoArticleGenerator()
     for bad in ({'transcript': ''}, {'text': '   '}, {}):
         with pytest.raises(ValueError):
             lp.generate_full_article(bad)
@@ -90,24 +88,23 @@ def test_empty_transcript_rejected():
 
 def test_transcript_key_compat():
     """transcript 与 text 两种键名都必须被接受"""
-    LLMProcessor = _get_llm_processor()
-    lp = LLMProcessor()
+    VideoArticleGenerator = _get_generator_cls()
+    lp = VideoArticleGenerator()
     assert lp._extract_transcript({'transcript': 'abc'}) == 'abc'
     assert lp._extract_transcript({'text': 'abc'}) == 'abc'
     assert lp._extract_transcript({'text': '  abc  '}) == 'abc'
 
 
 def test_solo_review_flags_fabricated_benchmarks():
-    """solo 审稿节点应识别第一手实测/压测数据断言（子进程隔离：
-    hello_feishu 的 config.py 模块与 hello_webchat_solo 的 config/ 包同名，不可同进程导入）"""
+    """wechat_agent 审稿节点应识别第一手实测/压测数据断言（子进程隔离运行智能体依赖）"""
     import subprocess
     import textwrap
 
-    solo_dir = os.path.join(ROOT, 'hello_webchat_solo')
+    solo_dir = os.path.join(ROOT)
     code = textwrap.dedent(f"""
         import asyncio, sys
         sys.path.insert(0, r'{solo_dir}')
-        from src.agents.nodes import review_article_node
+        from core.wechat_agent.agents.nodes import review_article_node
 
         draft = ("## 真实压测数据揭秘\\n\\n"
                  "Qdrant 单机 QPS 达到 1200，P99 延迟 40ms。这是我们实测的结果。\\n")

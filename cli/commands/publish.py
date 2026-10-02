@@ -1,11 +1,11 @@
-"""publish 命令域 — 飞书 / 微信公众号 / 一键多平台"""
+"""publish 命令域 — 飞书 / 微信公众号 / 抖音 / 一键多平台"""
 
 import sys
 
 
 def cmd_feishu_publish(args):
     """发布到飞书"""
-    from core.feishu_publisher import FeishuPublisher
+    from tools.feishu_publisher import FeishuPublisher
 
     pub = FeishuPublisher()
 
@@ -39,7 +39,7 @@ def cmd_feishu_publish(args):
 
 def cmd_wechat_publish(args):
     """发布到微信公众号草稿箱"""
-    from core.wechat_publisher import WechatPublisher
+    from tools.wechat_publisher import WechatPublisher
     from core.config import config
 
     pub = WechatPublisher()
@@ -92,7 +92,7 @@ def cmd_wechat_publish(args):
 
 def cmd_wechat_upload_image(args):
     """上传图片到微信（永久素材/正文图片）"""
-    from core.wechat_publisher import WechatPublisher
+    from tools.wechat_publisher import WechatPublisher
 
     pub = WechatPublisher()
 
@@ -117,7 +117,7 @@ def cmd_wechat_upload_image(args):
 
 def cmd_wechat_drafts(args):
     """查看草稿列表/数量"""
-    from core.wechat_publisher import WechatPublisher
+    from tools.wechat_publisher import WechatPublisher
 
     pub = WechatPublisher()
 
@@ -150,7 +150,7 @@ def cmd_wechat_drafts(args):
 
 def cmd_wechat_publish_draft(args):
     """发布草稿"""
-    from core.wechat_publisher import WechatPublisher
+    from tools.wechat_publisher import WechatPublisher
 
     pub = WechatPublisher()
     result = pub.publish(args.media_id)
@@ -166,7 +166,7 @@ def cmd_wechat_publish_draft(args):
 
 def cmd_wechat_publish_status(args):
     """查询发布状态"""
-    from core.wechat_publisher import WechatPublisher
+    from tools.wechat_publisher import WechatPublisher
 
     pub = WechatPublisher()
     result = pub.get_publish_status(args.publish_id)
@@ -190,9 +190,68 @@ def cmd_wechat_publish_status(args):
         sys.exit(1)
 
 
+def cmd_douyin_login(args):
+    """扫码登录抖音创作者平台，保存登录态 Cookie"""
+    from tools.douyin_publisher import DouyinPublisher
+
+    result = DouyinPublisher().login(timeout=args.timeout)
+    if result.success:
+        print("✅ 抖音登录态已就绪，可以发布视频了")
+    else:
+        print(f"❌ 登录失败: {result.error}")
+        sys.exit(1)
+
+
+def cmd_douyin_publish(args):
+    """上传视频到抖音"""
+    from tools.douyin_publisher import DouyinPublisher
+
+    pub = DouyinPublisher()
+    result = pub.publish_markdown(args.title, '', options={
+        'video': args.video_file,
+        'tags': args.tags or [],
+        'desc': args.desc or '',
+    })
+
+    if result.success:
+        print("✅ 发布流程完成!")
+        print(f"   作品进入平台审核，稍后可在创作者后台查看: {result.url}")
+    else:
+        print(f"❌ 发布失败: {result.error}")
+        sys.exit(1)
+
+
+def cmd_douyin_check(args):
+    """检查抖音登录态是否有效"""
+    from tools.douyin_publisher import DouyinPublisher
+
+    result = DouyinPublisher().health_check()
+    if result.success:
+        print("✅ 抖音登录态有效")
+    else:
+        print(f"❌ {result.error}")
+        sys.exit(1)
+
+
+def cmd_wechat_compose(args):
+    """AI 写作助手（LangGraph 智能体：选题→写作→配图→审稿→草稿箱）"""
+    import sys
+    from core.wechat_agent.app import main as agent_main
+
+    argv = ['wechat-agent']
+    if args.topic:
+        argv.append(args.topic)
+    if args.output:
+        argv += ['-o', args.output]
+    if args.publish:
+        argv.append('-p')
+    sys.argv = argv
+    agent_main()
+
+
 def cmd_publish_all(args):
     """一键多平台发布"""
-    from core.publisher_base import MultiPlatformPublisher
+    from tools.publisher_base import MultiPlatformPublisher
 
     # 读取内容
     if args.content_file:
@@ -227,6 +286,18 @@ def cmd_publish_all(args):
             'publish_now': args.publish_now,
             'open_comment': 1 if args.open_comment else 0,
         }
+
+    # 抖音为视频平台：需要 --video；显式指定却没给视频则报错，默认携带时跳过
+    explicit_platforms = set(args.platforms or [])
+    if 'douyin' in platforms:
+        if args.video:
+            options['douyin'] = {'video': args.video, 'tags': args.tags or []}
+        elif 'douyin' in explicit_platforms:
+            print("❌ 平台 douyin 需要视频文件：--video <视频路径>")
+            sys.exit(1)
+        else:
+            platforms = [p for p in platforms if p != 'douyin']
+            print("[跳过] douyin：未提供 --video（抖音为视频平台，单发请用 douyin publish）")
 
     print(f"🚀 开始发布到 {len(platforms)} 个平台: {', '.join(platforms)}\n")
 
@@ -301,21 +372,47 @@ def register(subparsers):
     p_wpd.add_argument('media_id', help='草稿的 media_id')
     p_wpd.set_defaults(func=cmd_wechat_publish_draft)
 
+    p_wc = wechat_sub.add_parser('compose', help='AI 写作助手生成公众号文章（LangGraph 智能体）')
+    p_wc.add_argument('topic', nargs='?', help='文章主题（不指定则进入交互式模式）')
+    p_wc.add_argument('-o', '--output', help='输出文件路径（如 article.md）')
+    p_wc.add_argument('-p', '--publish', action='store_true', help='生成后自动发布到微信公众号草稿箱')
+    p_wc.set_defaults(func=cmd_wechat_compose)
+
     p_ws = wechat_sub.add_parser('status', help='查询发布状态')
     p_ws.add_argument('publish_id', help='发布任务的 publish_id')
     p_ws.set_defaults(func=cmd_wechat_publish_status)
 
+    # ---- douyin ----
+    p_douyin = subparsers.add_parser('douyin', help='抖音发布相关（Playwright 自动化创作者后台）')
+    douyin_sub = p_douyin.add_subparsers(dest='douyin_cmd', help='抖音子命令')
+
+    p_dl = douyin_sub.add_parser('login', help='扫码登录抖音创作者平台，保存登录态 Cookie')
+    p_dl.add_argument('--timeout', type=int, default=300, help='等待扫码的超时秒数（默认300）')
+    p_dl.set_defaults(func=cmd_douyin_login)
+
+    p_dp = douyin_sub.add_parser('publish', help='上传视频到抖音')
+    p_dp.add_argument('--video-file', required=True, help='视频文件路径')
+    p_dp.add_argument('--title', required=True, help='视频标题/描述文案')
+    p_dp.add_argument('--desc', help='描述文案（默认用标题）')
+    p_dp.add_argument('--tags', nargs='*', help='话题标签（如 生活 vlog）')
+    p_dp.set_defaults(func=cmd_douyin_publish)
+
+    p_dc = douyin_sub.add_parser('check', help='检查抖音登录态是否有效')
+    p_dc.set_defaults(func=cmd_douyin_check)
+
     # ---- publish（多平台）----
-    p_pub = subparsers.add_parser('publish', help='一键多平台发布（飞书+公众号）')
+    p_pub = subparsers.add_parser('publish', help='一键多平台发布（飞书+公众号+抖音）')
     p_pub.add_argument('--title', required=True, help='文章标题')
     p_pub.add_argument('--content', help='Markdown 正文内容')
     p_pub.add_argument('--content-file', help='从文件读取 Markdown 正文')
     p_pub.add_argument('--platforms', nargs='+',
-                       help='目标平台 (feishu wechat)，默认所有可用平台')
+                       help='目标平台 (feishu wechat douyin)，默认所有可用平台')
     p_pub.add_argument('--images', nargs='*', help='飞书：要插入的图片路径')
     p_pub.add_argument('--cover', help='微信：封面图路径')
     p_pub.add_argument('--author', help='微信：作者名')
     p_pub.add_argument('--digest', help='微信：文章摘要')
     p_pub.add_argument('--open-comment', action='store_true', help='微信：打开评论')
     p_pub.add_argument('--publish-now', action='store_true', help='微信：立即发布（默认仅草稿）')
+    p_pub.add_argument('--video', help='抖音：视频文件路径（多平台发布时提供才包含 douyin）')
+    p_pub.add_argument('--tags', nargs='*', help='抖音：话题标签')
     p_pub.set_defaults(func=cmd_publish_all)

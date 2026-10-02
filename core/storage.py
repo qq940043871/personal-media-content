@@ -11,7 +11,7 @@
     from core.storage import Storage
     storage = Storage()
 
-    # 平台素材库中的小说项目路径（storage/novels/<name>，与 hello_novel 正文目录分离）
+    # 平台素材库中的小说项目路径（storage/novels/<name>，与内容资产库 assets/novels/ 分离）
     novel_dir = storage.novel_dir('cangyuantu')
 
     # 检查文件是否已处理（幂等）

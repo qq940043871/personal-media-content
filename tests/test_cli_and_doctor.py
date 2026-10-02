@@ -23,7 +23,8 @@ def test_parser_registers_all_commands():
     parser = build_parser()
     usage = parser.format_usage()
     for cmd in ('status', 'doctor', 'video', 'asr', 'llm', 'feishu',
-                'wechat', 'publish', 'story', 'asset', 'task', 'storage', 'dashboard'):
+                'wechat', 'publish', 'story', 'asset', 'task', 'storage',
+                'dashboard', 'pipeline'):
         assert cmd in usage, cmd
 
 
@@ -35,6 +36,7 @@ def test_leaf_commands_get_handler():
     assert parser.parse_args(['publish', '--title', 't']).func
     assert parser.parse_args(['video', 'info', 'x.mp4']).func
     assert parser.parse_args(['storage', 'stats']).func
+    assert parser.parse_args(['pipeline', 'video-article']).func
 
 
 def test_doctor_flags_parse():
@@ -45,7 +47,8 @@ def test_doctor_flags_parse():
 
 def test_status_lists_business_lines():
     from cli.commands.status import BUSINESS_LINES
-    assert 'hello_novel' in BUSINESS_LINES
-    assert 'family-life-video' in BUSINESS_LINES
-    assert 'publish_workbench' in BUSINESS_LINES
-    assert not any(d == 'blog' for d in BUSINESS_LINES)
+    # 业务线目录已全部并入主工程（内容在 assets/，能力在 core/，技能在 .claude/skills/）
+    assert BUSINESS_LINES == []
+    assert 'publish_workbench' not in BUSINESS_LINES
+    assert 'hello_webchat_official' not in BUSINESS_LINES
+    assert 'hello_novel' not in BUSINESS_LINES

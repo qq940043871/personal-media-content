@@ -9,44 +9,49 @@
 ```
 personal-media-content/
 │
-├── core/                          ← 共享核心能力层（内部分层）
+├── core/                          ← 对内能力层（被 import 的库）
 │   ├── config.py                  # 统一配置（根 .env；LLM/ASR 属性由注册表推导，旧键回落）
 │   ├── providers/                 # ★ 模型接入层：凭据唯一存放处 + 工厂
 │   │   ├── registry.py            #   PROVIDER_* 环境变量解析 → resolve('chat'|'asr'|'image')
 │   │   ├── llm.py                 #   LLMClient + get_llm_client（OpenAI 兼容，端点自动补全）
 │   │   └── asr.py                 #   ASRClient（云端 input_audio / 本地 faster-whisper）
-│   ├── publisher_base.py          # ★ 发布契约：PublishResult + BasePublisher + 按名注册
-│   ├── feishu_publisher.py        #   飞书发布（实现契约；lark-cli 桥接见 lark_helper.js）
-│   ├── wechat_publisher.py        #   公众号发布（实现契约；MD→HTML、草稿、发布）
+│   ├── project_manager.py         #   工作台项目模型 + 发布记录（SQLite storage/db/projects.db）
+│   ├── inventory.py               #   内容资产盘点：小说/资产/稿件/成片/发布记录统计（创作统计页数据源）
 │   ├── story_to_script.py         #   小说→分镜
 │   ├── story_to_article.py        #   小说→文章
-│   ├── novel_publisher.py         #   小说批量飞书发布（幂等记录在 storage/db/）
+│   ├── video_to_article.py        #   教学视频→文章流水线（原 hello_feishu；编排/成文/配图/转写落盘）
+│   ├── wechat_agent/              #   公众号写作智能体（原 hello_wechat/solo；LangGraph，凭据回落根 .env）
 │   ├── asset_manager.py           #   素材资产（SQLite storage/db/assets.db）
 │   ├── task_manager.py            #   任务调度（SQLite storage/db/tasks.db）
 │   ├── storage.py                 #   路径与存储工具
-│   ├── video_toolkit.py           #   FFmpeg 封装
+│   └── video_toolkit.py           #   FFmpeg 封装
+│
+├── tools/                         ← 对外动作层（发布工具，skill 化预备；接口契约见 tools/README.md）
+│   ├── publisher_base.py          # ★ 发布契约：PublishResult + BasePublisher + 按名注册
+│   ├── feishu_publisher.py        #   飞书发布（lark_helper.js 桥接；支持按知识库移入）
+│   ├── wechat_publisher.py        #   公众号发布（MD→HTML、草稿、发布）
+│   ├── douyin_publisher.py        #   抖音发布（Playwright 自动化创作者后台，登录态 Cookie）
+│   ├── novel_publisher.py         #   小说批量飞书发布（幂等记录在 storage/db/）
+│   ├── asset_store.py             #   资产库读写与状态流转（drafts → published + meta.json）
 │   └── lark_helper.js             #   lark-cli 桥接（auth-status / create-doc / insert-image / move-to-wiki）
+│
+├── assets/                        ← 创作资产库（novels/ 每本小说一个文件夹、douyin/ 视频线、wechat/feishu 发布资产 drafts/published）
 │
 ├── cli/                           ← 命令实现包（media-cli.py 只是薄入口）
 │   ├── app.py                     #   解析器组装
 │   └── commands/                  #   status / doctor / video / ai / publish / story /
 │                                  #   asset / task / storage / dashboard 各域一模块
 │
-├── dashboard/                     ← Web 看板（Flask + templates/*.html；默认仅绑 127.0.0.1）
+├── dashboard/                     ← Web 看板 + 项目工作台（Flask + templates/*.html；默认仅绑 127.0.0.1）
 ├── media-cli.py                   ← 统一 CLI 入口
-├── tests/                         ← 平台层 pytest（注册表/发布契约/doctor/CLI）
+├── tests/                         ← 平台层 pytest（注册表/发布契约/资产库/doctor/CLI/项目工作台）
 ├── models/                        ← 模型缓存（运行时生成，不入库）
 ├── storage/                       ← 统一产物/数据库根（db/ 与运行子目录不入库）
 ├── docs/                          ← 文档索引与目录规范
 │
-├── hello_doubao_video/            ← 短视频线（docs/scripts/media；assets 运行时生成）
-├── hello_feishu/                  ← 教学视频→飞书流水线（兼容层桥接 core）
-├── hello_novel/                   ← 小说线（novels/<book>/process|chapters/…）
-├── hello_webchat_official/        ← 公众号技能流水线（drafts/；凭据在其 aws.env）
-├── hello_webchat_solo/            ← 公众号独立写作程序（模型凭据走根注册表）
-├── hello_weixin_book/             ← 网文分析（analyses/，纯内容资产）
-├── family-life-video/             ← 家庭亲情短视频内容稿（纯内容资产）
-└── publish_workbench/             ← 发布工作台（单文件 HTML APP，localStorage）
+├── .claude/skills/                ← 项目技能库（公众号官方文章技能线 15 个技能包）
+（2026-10 收敛：业务线全部并入主工程——内容进 assets/、能力进 core/、技能进 .claude/skills/；
+ hello_weixin_book 书评线迁出至上游 personal-read-book；hello_feishu / hello_wechat 归档于 docs/_archive/）
 ```
 
 业务线物理分层规范见 [docs/DIRECTORY_STANDARD.md](docs/DIRECTORY_STANDARD.md)。
@@ -69,36 +74,40 @@ IMAGE_PROVIDER=ark   # 生图能力用谁
 
 - 解析入口：`core.providers.registry.resolve(task)`，任务 ∈ `chat / asr / image`。
 - 旧键（`LLM_API_KEY/URL/MODEL`、`ASR_*`）作为回退保留：注册表缺某能力时生效。
-- 消费方：`core/llm_client.py` 与 `core/asr_client.py` 为兼容 shim（实现已在 `core/providers/`）；`hello_webchat_solo` 的 Settings 未显式配置时回落注册表。
+- 消费方：`core/llm_client.py` 与 `core/asr_client.py` 为兼容 shim（实现已在 `core/providers/`）；`core/wechat_agent` 的 Settings 未显式配置时回落注册表。
 - 验证：`python media-cli.py doctor --live`（静态检查 + LLM 实调 + 发布平台健康检查）。
 
 新增 provider 步骤：根 `.env` 加一组 `PROVIDER_<ID>_*` 键 → 对应能力 `<X>_PROVIDER=<ID>` → `doctor` 验证。无需改任何代码。
 
-## 三、发布契约（v3 核心变化）
+## 三、工具层与发布契约（v3 核心）
 
-- `PublishResult`：统一结果对象（success/platform/url/id/error/raw），兼容 dict 访问。
-- `BasePublisher`：真 ABC——子类实现 `publish_markdown(title, content_md, options) -> PublishResult`，可选 `health_check()`（平台连通性）与 `check_config()`（配置完整性）。
-- `MultiPlatformPublisher`：按名发现已登记平台（`_load_publisher`），未配置平台记入 `init_errors` 而不崩溃；`health_check_all()` 批量体检（doctor 复用）。
-- 新增发布平台：实现 `BasePublisher` → 在 `publisher_base._load_publisher` 登记一条 → CLI/doctor 自动纳入。
+- **tools/ = 对外动作层**（发布类工具，每个可独立运行、未来逐个封装成 skills，接口契约见 tools/README.md）；**core/ = 对内能力层**（被 import 的库）。分层方向：tools → core，反向不依赖。
+- `tools/publisher_base.py`：`PublishResult`（统一结果对象，兼容 dict 访问）+ `BasePublisher`（子类实现 `publish_markdown(title, content_md, options) -> PublishResult`，可选 `health_check()`/`check_config()`）+ `MultiPlatformPublisher`（按名发现已登记平台，未配置平台记入 `init_errors` 而不崩溃；`health_check_all()` 批量体检，doctor 复用）。
+- 已登记平台：`feishu` / `wechat`（API 类）+ `douyin`（Playwright 自动化创作者后台，无个人发布 API；登录态 Cookie 在 `storage/douyin/`，不入库；`options['video']` 传视频，图文契约下 markdown 正文不上传）。
+- **资产库（assets/）**：`tools/asset_store.AssetStore` 管理平台 × `drafts/published` 的状态流转——发布成功自动移入 `published/` 并写 `<文件名>.meta.json`；飞书支持 `FEISHU_WIKI_SPACES=名称:space_id,...` 按知识库移入。同篇内容发多平台按目标各放一份。
+- 独立命令入口（`--json` + 退出码 0/1，skill 化契约）：`python -m tools.wechat|feishu|douyin publish --asset <路径>`、`python -m tools.asset_store ls|put|publish|spaces`。
+- 新增发布平台：实现 `tools.publisher_base.BasePublisher` → 在 `publisher_base._load_publisher` 登记一条 → CLI/doctor 自动纳入（步骤见 tools/README.md）。
 
 ## 四、核心能力层（2.x）
 
 ### 4.1 config.py
 
-全局一次加载根 `.env`。存储默认：`storage/{videos_input,videos_output,articles,novels}`；`storage/db/` 为 SQLite 运行库（不入库，可重建）。平台素材库 `storage/novels` **独立于** 业务线正文目录 `hello_novel/novels/`。
+全局一次加载根 `.env`。存储默认：`storage/{videos_input,videos_output,articles,novels}`；`storage/db/` 为 SQLite 运行库（不入库，可重建）。平台素材库 `storage/novels` **独立于** 内容资产库 `assets/novels/`（前者是 SQLite 索引的素材，后者是正文与过程稿）。
 
 ### 4.2 内容转化
 
 - `story_to_script.py`：6 种风格分镜 + AI 提示词
 - `story_to_article.py`：deep / summary / character / worldview
-- `novel_publisher.py`：幂等批量发飞书（发布记录在 `storage/db/feishu_published.json`）
+- `tools/novel_publisher.py`：幂等批量发飞书（发布记录在 `storage/db/feishu_published.json`）
 
-输入章节使用现行路径，如 `hello_novel/novels/cangyuantu/chapters/8-续写-第1章.txt`。
+输入章节使用现行路径，如 `assets/novels/cangyuantu/chapters/8-续写-第1章.txt`。
 
 ### 4.3 资产与任务
 
 - `asset_manager.py`：标签、关联、扫描章节目录
 - `task_manager.py`：pending → running → done/failed/skipped，重试与日志
+- `project_manager.py`：工作台项目模型（article/novel/video）+ 发布记录（running → success/failed），SQLite `storage/db/projects.db`
+- `inventory.py`：创作统计盘点——扫描 `assets/novels/`（书目按 `chapters/` 与 `novel/chapters/` 两代布局；无章节目录的子目录计为主题/文集）、发布资产 `assets/**/drafts|published`，汇总发布记录；带 mtime 签名缓存
 - `storage.py`：路径快捷与幂等检查
 
 ### 4.4 video_toolkit.py
@@ -131,29 +140,24 @@ python media-cli.py dashboard start --port 5000
 ## 七、内容转化链路
 
 ```
-hello_novel/novels/*/chapters
+assets/novels/*/chapters
     ├─ story_to_script  → 分镜 + 提示词 → 视频生成
     ├─ story_to_article → 公众号/飞书文章
     └─ novel_publisher  → 飞书知识库
 
-hello_feishu/videos → 抽帧/ASR/LLM → 飞书文章
-hello_weixin_book/analyses → 阅读与选题素材
-family-life-video/<主题> → 分镜/口播稿 → hello_doubao_video 成片（规划中）
-hello_webchat_* → 公众号成稿（技能线 drafts / 程序线 output）
+storage/videos_input → pipeline video-article（core/video_to_article）→ 飞书文章
+assets/novels/<主题> → 分镜/口播稿 → assets/douyin 成片（规划中）
+（书评分析已迁 personal-read-book 仓库）
+.claude/skills + core/wechat_agent → 公众号成稿（assets/wechat/drafts/<篇名>/）
 ```
 
 ## 八、业务线与平台边界
 
 | 业务线 | 是否依赖 core | 说明 |
 |--------|---------------|------|
-| hello_doubao_video | 可选 | 可用 `media-cli.py video`；保留本地脚本 |
-| hello_feishu | 是（兼容层） | `config.py`/`modules/*` 委托 core；模型凭据走根注册表 |
-| hello_novel | 转化时 | 创作目录自治；发布/改写走 CLI |
-| hello_webchat_official | 可选 | 技能包自治（凭据在其 `aws.env`）；发布可复用 wechat_publisher |
-| hello_webchat_solo | 共享注册表 | LangGraph 程序自治；LLM/生图/微信凭据回落根 `.env` |
-| hello_weixin_book | 否 | 纯内容资产 |
-| family-life-video | 否 | 纯内容稿（分镜/口播），上游供 doubao_video |
-| publish_workbench | 否 | 单文件 HTML 发布跟踪 APP |
+| assets/（novels·douyin·主题） | 转化时 | 创作目录自治；发布/改写走 CLI 与 tools/ |
+| core/wechat_agent | 共享注册表 | LangGraph 智能体（原 hello_wechat/solo）；LLM/生图/微信凭据回落根 `.env` |
+| .claude/skills（公众号技能线） | 可选 | 技能包自治（凭据在根 `aws.env`）；发布可复用 tools/wechat_publisher |
 
 ## 九、质量底线
 
