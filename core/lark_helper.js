@@ -2,6 +2,7 @@
  * 飞书 Lark CLI 桥接脚本 — 通过 @larksuite/cli 操作飞书文档
  *
  * 用法：
+ *   node lark_helper.js auth-status
  *   node lark_helper.js create-doc <contentFile> <title>
  *   node lark_helper.js insert-image <docId> <imageFile> [caption] [selection]
  *
@@ -34,7 +35,11 @@ function runLarkCli(larkArgs, cwd) {
 }
 
 try {
-    if (action === 'create-doc') {
+    if (action === 'auth-status') {
+        // 授权状态检查（供 health_check 使用）
+        runLarkCli(['auth', 'status']);
+
+    } else if (action === 'create-doc') {
         // 创建飞书文档
         const contentFile = args[1];
         const title = args[2];
@@ -87,7 +92,7 @@ try {
 
     } else {
         process.stdout.write('Unknown action: ' + action + '\n');
-        process.stdout.write('Available: create-doc, insert-image, move-to-wiki\n');
+        process.stdout.write('Available: auth-status, create-doc, insert-image, move-to-wiki\n');
         process.exit(1);
     }
 } catch (err) {

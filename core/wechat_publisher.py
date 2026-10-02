@@ -30,6 +30,10 @@
 
     # 发布
     pub.publish(media_id)
+
+    # 统一契约（MultiPlatformPublisher 使用）
+    pr = pub.publish_markdown('标题', '# 正文')   # → PublishResult（进草稿箱）
+    health = pub.health_check()                  # → access_token 实测
 """
 
 import os
@@ -38,10 +42,14 @@ import time
 import requests
 import re
 from .config import config
+from .publisher_base import BasePublisher, PublishResult
 
 
-class WechatPublisher:
+class WechatPublisher(BasePublisher):
     """微信公众号发布客户端"""
+
+    platform_id = 'wechat'
+    platform_name = '微信公众号'
 
     BASE_URL = 'https://api.weixin.qq.com/cgi-bin'
 
@@ -50,6 +58,52 @@ class WechatPublisher:
         self.app_secret = app_secret or config.WECHAT_APP_SECRET
         self._access_token = None
         self._token_expires_at = 0
+
+    # ===== 统一契约（BasePublisher）=====
+
+    def check_config(self):
+        if self.app_id and self.app_secret:
+            return True, ''
+        return False, '微信公众号未配置（WECHAT_APP_ID / WECHAT_APP_SECRET）'
+
+    def health_check(self) -> PublishResult:
+        """实测 access_token 获取；IP 白名单问题给出修复指引"""
+        try:
+            token = self.get_access_token()
+            if token:
+                return PublishResult(success=True, platform=self.platform_id,
+                                     raw={'token_len': len(token)})
+            return PublishResult(success=False, platform=self.platform_id,
+                                 error='access_token 获取结果为空')
+        except Exception as e:
+            msg = str(e)
+            if 'invalid ip' in msg:
+                msg += ' → 修复：微信公众平台后台 → 设置与开发 → 安全中心 → IP 白名单，添加该出口 IP'
+            return PublishResult(success=False, platform=self.platform_id, error=msg)
+
+    def publish_markdown(self, title, content_md, options=None) -> PublishResult:
+        """统一契约：Markdown → 公众号草稿箱（可选直接发布）"""
+        opts = options or {}
+        result = self.publish_article_from_markdown(
+            title=title,
+            markdown_content=content_md,
+            cover_image_path=opts.get('cover_image'),
+            author=opts.get('author', ''),
+            digest=opts.get('digest', ''),
+            content_source_url=opts.get('source_url', ''),
+            need_open_comment=opts.get('open_comment', 0),
+            only_fans_can_comment=opts.get('fans_only', 0),
+            auto_publish=opts.get('publish_now', False),
+        )
+        return PublishResult(
+            success=result.get('success', False),
+            platform=self.platform_id,
+            title=title,
+            url='',
+            id=result.get('media_id', ''),
+            error=result.get('error', ''),
+            raw=result,
+        )
 
     # ===== access_token 管理 =====
 

@@ -5,35 +5,95 @@
     from core.feishu_publisher import FeishuPublisher
     pub = FeishuPublisher()
 
-    # 发布文章
+    # 发布文章（兼容旧接口）
     result = pub.publish_article(
         title="文章标题",
         content_md="# 正文\n...",
         images=[{"path": "img.jpg", "caption": "图1"}]
     )
     print(result['doc_url'])
+
+    # 统一契约（MultiPlatformPublisher 使用）
+    pr = pub.publish_markdown("标题", "# 正文")   # → PublishResult
+    health = pub.health_check()                  # → lark-cli 授权状态
 """
 
 import os
 import sys
 import subprocess
 import json
-import glob
 import tempfile
 from datetime import datetime
 
 from .config import config
+from .publisher_base import BasePublisher, PublishResult
 
 # 桥接 JS 脚本路径（在 core 目录下）
 LARK_HELPER_JS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lark_helper.js')
 
 
-class FeishuPublisher:
+class FeishuPublisher(BasePublisher):
     """飞书文档发布器"""
+
+    platform_id = 'feishu'
+    platform_name = '飞书文档'
 
     def __init__(self):
         self.doc_id = None
         self.doc_url = None
+
+    # ===== 统一契约（BasePublisher）=====
+
+    def check_config(self):
+        """lark-cli 可用即视为配置完整（授权状态由 health_check 细查）"""
+        if os.path.exists(config.LARK_CLI_RUN_JS):
+            return True, ''
+        return False, (f"lark-cli 不存在: {config.LARK_CLI_RUN_JS}"
+                       f"（可用环境变量 LARK_CLI_RUN_JS 覆盖，或 npm i -g @larksuite/cli）")
+
+    def health_check(self):
+        """检查 lark-cli 授权状态（bot / user 身份）"""
+        stdout, err = self._run_node_helper('auth-status')
+        if err is None:
+            err = ''
+        output = (stdout or '') + '\n' + err
+        data = self._parse_json_output(output)
+
+        if not data.get('ok', True):
+            return PublishResult(success=False, platform=self.platform_id,
+                                 error=f"lark-cli 授权异常: {data.get('error', {}).get('message', '未知')}")
+
+        identities = data.get('identities', {})
+        bot_ok = identities.get('bot', {}).get('available', False)
+        if identities.get('user', {}).get('available', False):
+            return PublishResult(success=True, platform=self.platform_id,
+                                 raw={'user': True, 'bot': bot_ok})
+        # 建文档走 --as user，bot 身份可用也不够
+        return PublishResult(
+            success=False, platform=self.platform_id,
+            error="lark-cli user 身份未授权（bot 身份" + ("可用但建文档用不到）" if bot_ok else "同样缺失）")
+                  + "：请运行 node " + f"\"{config.LARK_CLI_RUN_JS}\" auth login --domain all 完成浏览器授权")
+
+    def publish_markdown(self, title, content_md, options=None) -> PublishResult:
+        """统一契约：发布 Markdown 到飞书文档"""
+        opts = options or {}
+        raw_images = opts.get('images')
+
+        # 归一化：['x.jpg'] 或 [{'path': ...}] 均可
+        images = None
+        if raw_images:
+            images = [img if isinstance(img, dict) else {'path': img} for img in raw_images]
+
+        result = self.publish_article(title, content_md, images=images)
+        return PublishResult(
+            success=result.get('success', False),
+            platform=self.platform_id,
+            title=title,
+            url=result.get('doc_url', ''),
+            id=result.get('doc_id', ''),
+            error=result.get('error', ''),
+            raw=result,
+        )
 
     # ===== 核心操作 =====
 
@@ -44,9 +104,8 @@ class FeishuPublisher:
         Returns:
             dict: {'success': bool, 'doc_id': str, 'doc_url': str, 'error': str}
         """
-        tmp_md = os.path.join(tempfile.gettempdir(), 'feishu_doc_content.md')
-
-        with open(tmp_md, 'w', encoding='utf-8') as f:
+        fd, tmp_md = tempfile.mkstemp(prefix='feishu_doc_', suffix='.md')
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
             f.write(content_md.lstrip('\n'))
 
         try:
@@ -245,38 +304,3 @@ class FeishuPublisher:
                 except json.JSONDecodeError:
                     pass
         return {'ok': False, 'error': {'message': '无法解析响应'}}
-
-
-# ===== 便捷工具函数 =====
-
-def get_video_frames(video_name, frames_dir=None, max_frames=5):
-    """获取视频关键帧列表（用于文章配图）"""
-    if frames_dir is None:
-        frames_dir = config.get_video_frames_dir(video_name)
-
-    pattern = os.path.join(frames_dir, f"{video_name}_keyframe_*.jpg")
-    frames = sorted(glob.glob(pattern))
-
-    if not frames:
-        return []
-
-    if len(frames) <= max_frames:
-        return frames
-
-    step = len(frames) // max_frames
-    return [frames[i] for i in range(0, len(frames), step)][:max_frames]
-
-
-def generate_article_images(video_name, frames_dir=None, max_frames=5):
-    """生成文章配图数据结构（供 FeishuPublisher.insert_images_batch 使用）"""
-    frames = get_video_frames(video_name, frames_dir, max_frames)
-
-    images = []
-    for i, frame_path in enumerate(frames):
-        images.append({
-            'path': frame_path,
-            'caption': f"视频关键帧 {i + 1}",
-            'selection': None
-        })
-
-    return images

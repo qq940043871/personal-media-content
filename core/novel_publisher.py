@@ -23,28 +23,46 @@ import sys
 import re
 import json
 import glob
+import shutil
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.feishu_publisher import FeishuPublisher
+from core.config import config
 
 
 class NovelFeishuPublisher:
     """小说飞书发布器（批量章节发布）"""
 
-    def __init__(self, record_file='_feishu_published.json'):
+    def __init__(self, record_file=None):
         self.publisher = FeishuPublisher()
+        # 幂等记录统一放 storage/db/（运行时数据，随库重建）；旧 CWD 文件自动迁移
+        if record_file is None:
+            db_dir = os.path.join(config.STORAGE_BASE, 'db')
+            os.makedirs(db_dir, exist_ok=True)
+            record_file = os.path.join(db_dir, 'feishu_published.json')
         self.record_file = record_file
         self._records = self._load_records()
 
     def _load_records(self):
-        """加载已发布记录"""
+        """加载已发布记录；CWD 旧记录文件存在时自动迁移到 storage/db/"""
         if os.path.exists(self.record_file):
             try:
                 with open(self.record_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except:
                 return {}
+
+        legacy = os.path.join(os.getcwd(), '_feishu_published.json')
+        if os.path.exists(legacy):
+            try:
+                with open(legacy, 'r', encoding='utf-8') as f:
+                    records = json.load(f)
+                shutil.copyfile(legacy, self.record_file)
+                print(f"[NovelPublisher] 已迁移发布记录: {legacy} → {self.record_file}")
+                return records
+            except Exception:
+                pass
         return {}
 
     def _save_records(self):
