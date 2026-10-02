@@ -31,6 +31,7 @@ python media-cli.py status
 | `hello_webchat_official/` | 公众号官方文章技能流水线 |
 | `hello_webchat_solo/` | 公众号智能写作助手（独立程序） |
 | `hello_weixin_book/` | 网文/书籍分析 HTML 产出 |
+| `publish_workbench/` | 发布工作台（公众号/抖音/飞书发布跟踪，单文件 HTML APP） |
 
 业务线内部统一采用 **process（过程）/ chapters·analyses（内容）/ docs（说明）/ assets·media（素材）** 分层，详见 [docs/DIRECTORY_STANDARD.md](docs/DIRECTORY_STANDARD.md)。
 
@@ -93,6 +94,7 @@ python media-cli.py dashboard start --port 5000
 | 公众号官方 | [hello_webchat_official/README.md](hello_webchat_official/README.md) | 技能驱动写稿 |
 | 公众号 Solo | [hello_webchat_solo/README.md](hello_webchat_solo/README.md) | 独立写作程序 |
 | 书评分析 | [hello_weixin_book/README.md](hello_weixin_book/README.md) | 网文分析 HTML |
+| 发布工作台 | [publish_workbench/README.md](publish_workbench/README.md) | 三平台发布状态跟踪 + 日历 + 清单（本地单文件 APP） |
 
 ## 配置
 

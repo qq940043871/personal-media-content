@@ -23,6 +23,7 @@
 | 公众号 Solo | [../hello_webchat_solo/README.md](../hello_webchat_solo/README.md) | `CLAUDE.md`（程序架构） |
 | 书评分析 | [../hello_weixin_book/README.md](../hello_weixin_book/README.md) | [INDEX.md](../hello_weixin_book/INDEX.md) |
 | 个人博客 | [../blog/index.html](../blog/index.html)（静态站） | `_seed/` 种子与生成脚本（依赖工作台知识库，`KB_ROOT` 可覆盖） |
+| 发布工作台 | [../publish_workbench/README.md](../publish_workbench/README.md) | `index.html` 单文件 APP（公众号/抖音/飞书发布跟踪，数据存浏览器 localStorage） |
 
 ## 小说作品索引
 

@@ -29,6 +29,7 @@
 | `hello_weixin_book` | — | `analyses/*.html` | `README.md`、`INDEX.md` | `assets/` |
 | `hello_feishu` | `CLAUDE.md` | `articles/` | `README.md` | `videos/`、`output/`、`models/` 均为运行时生成，不入库 |
 | `hello_webchat_*` | skills / config | `drafts/`、`output/`（output 运行时生成） | 各自 `README.md` / `CLAUDE.md` | 封面图等 |
+| `publish_workbench` | — | — | `README.md` | `index.html` 单文件 APP（数据存浏览器 localStorage） |
 
 平台层代码与数据：
 
