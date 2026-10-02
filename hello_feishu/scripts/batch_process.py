@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# ⚠️ 遗留脚本（勿直接运行）：写死分家前工作台路径 D:/ai_coder/p000_llm_video_ark 与旧 SPACE_ID。
+# 现行做法：python media-cli.py feishu publish --title xxx --content-file xxx.md
 import json
 import os
 import sys

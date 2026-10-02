@@ -142,13 +142,13 @@ python main.py
 
 ### 模块 4: 飞书发布 (`modules/feishu_publisher.py`)
 
-通过 `modules/lark_helper.js` 调用 `@larksuite/cli` 命令行工具：
+通过 `core/lark_helper.js` 调用 `@larksuite/cli` 命令行工具：
 
 1. `docs +create` — 创建飞书文档
 2. `docs +media-insert` — 倒序插入关键帧图片（用 `--selection-with-ellipsis` 锚定标题，避免位置偏移）
 3. `wiki +move` — 移动到目标知识空间
 
-> **注意**: `lark_helper.js` 硬编码了 Node 路径 `C:\Program Files\nodejs\node_modules\@larksuite\cli\scripts\run.js`，如果 Node 装在其他位置需要修改。
+> **注意**: lark-cli 路径默认取 Windows 全局安装位置，可用环境变量 `LARK_CLI_RUN_JS`（或根 `.env`）覆盖，无需改代码。
 
 ## 单独测试各模块
 
@@ -206,7 +206,7 @@ output/
 │   ├── asr_processor.py       # 云端/本地 ASR 转写
 │   ├── llm_processor.py       # LLM 流式文章生成
 │   ├── feishu_publisher.py    # 飞书文档创建+图片插入
-│   └── lark_helper.js         # lark-cli Node.js 桥接
+│   └── (lark_helper.js 已上收 core/lark_helper.js，本线为兼容层)
 │
 ├── scripts/
 │   └── publish_to_feishu.py   # 批量发布到飞书知识库
