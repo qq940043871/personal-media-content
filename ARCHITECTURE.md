@@ -85,7 +85,7 @@ IMAGE_PROVIDER=ark   # 生图能力用谁
 - `tools/publisher_base.py`：`PublishResult`（统一结果对象，兼容 dict 访问）+ `BasePublisher`（子类实现 `publish_markdown(title, content_md, options) -> PublishResult`，可选 `health_check()`/`check_config()`）+ `MultiPlatformPublisher`（按名发现已登记平台，未配置平台记入 `init_errors` 而不崩溃；`health_check_all()` 批量体检，doctor 复用）。
 - 已登记平台：`feishu` / `wechat`（API 类）+ `douyin`（Playwright 自动化创作者后台，无个人发布 API；登录态 Cookie 在 `storage/douyin/`，不入库；`options['video']` 传视频，图文契约下 markdown 正文不上传）。
 - **资产库（assets/）**：`tools/asset_store.AssetStore` 管理平台 × `drafts/published` 的状态流转——发布成功自动移入 `published/` 并写 `<文件名>.meta.json`；飞书支持 `FEISHU_WIKI_SPACES=名称:space_id,...` 按知识库移入。同篇内容发多平台按目标各放一份。
-- 独立命令入口（`--json` + 退出码 0/1，skill 化契约）：`python -m tools.wechat|feishu|douyin publish --asset <路径>`、`python -m tools.asset_store ls|put|publish|spaces`。
+- 独立命令入口（`--json` + 退出码 0/1，skill 化契约）：`python -m tools.wechat|feishu|douyin publish --asset <路径>`、`python -m tools.asset_store init|ls|put|publish|spaces`（`init` 幂等建齐平台×`drafts/published` 骨架：wechat/douyin 各一个、feishu 按知识库、novels 按书名，空目录写 `.gitkeep`）。
 - 新增发布平台：实现 `tools.publisher_base.BasePublisher` → 在 `publisher_base._load_publisher` 登记一条 → CLI/doctor 自动纳入（步骤见 tools/README.md）。
 
 ## 四、核心能力层（2.x）

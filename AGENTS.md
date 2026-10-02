@@ -38,6 +38,7 @@
 - 资产库：`assets/`（平台 × drafts/published 状态流转；发布成功自动归档 + meta.json；结构见 assets/README.md）
 - 命令：`cli/commands/`（`media-cli.py` 只是薄入口）
 - 看板与工作台：`dashboard/`（模板在 `dashboard/templates/`；默认仅绑 127.0.0.1；首页为创作统计 `/api/inventory` 盘点小说/资产/稿件，`/workbench` 项目工作台，项目数据在 `storage/db/projects.db`）
+- 启动器：`start.bat`（Windows 双击出菜单）/ `start.sh`（Git Bash）；带参数时原样透传给 `media-cli.py`；两者都会自动挑「能 import dotenv」的解释器（本机 `python` 指向缺依赖的托管版，实际依赖在 anaconda）
 - 单测：`tests/`（平台层 pytest，依赖 `requirements-dev.txt`）
 - 统一存储/DB：`storage/`（由 `.env` 的 `STORAGE_*` 配置，默认 `storage/`；`db/` 与运行子目录不入库）
 - 模型缓存：`models/`（运行时生成，不入库）
@@ -67,6 +68,8 @@
 ## 常用命令
 
 ```bash
+start.bat                                  # Windows 启动器：双击出菜单，带参数则透传 media-cli.py
+./start.sh status                          # Git Bash 启动器（同款菜单/透传）
 pip install -r requirements.txt            # 运行依赖
 pip install -r requirements-dev.txt        # 测试依赖（pytest）
 python media-cli.py doctor --live          # 环境自检 + 探活（接入/排障第一步）
@@ -74,6 +77,7 @@ python media-cli.py status
 python media-cli.py dashboard start --port 5000
 python media-cli.py asset scan novel --project 沧元图 \
   --dir ./assets/novels/cangyuantu/chapters/
+python media-cli.py asset init               # 建齐资产库骨架（wechat/douyin 各一个、feishu 按知识库、novels 按书名）
 python media-cli.py asset ls --json          # 待发布资产库清单
 python media-cli.py asset publish --file assets/wechat/drafts/x.md   # 发布并自动归档
 python -m pytest tests/                    # 平台层回归

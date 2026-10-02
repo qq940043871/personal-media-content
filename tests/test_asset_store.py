@@ -153,3 +153,55 @@ def test_publish_one_platform_inference_and_missing_file(store, monkeypatch):
     bad = types.SimpleNamespace(file='D:/nowhere/a.md', platform=None, space=None,
                                 title=None, tags=None, cover=None)
     assert m._publish_one(store, bad)['success'] is False
+
+
+def test_books_detection(store):
+    """书目识别：目录含 chapters/ 或 novel/chapters/ 才算一本小说"""
+    import os
+
+    for book, layout in (('甲书', 'chapters'), ('乙书', 'novel/chapters')):
+        os.makedirs(os.path.join(store.root, 'novels', book, layout), exist_ok=True)
+    # 主题文集（无正文目录）不应被识别成书目
+    os.makedirs(os.path.join(store.root, 'novels', '主题A'), exist_ok=True)
+    with open(os.path.join(store.root, 'novels', '主题A', '短视频脚本.md'),
+              'w', encoding='utf-8') as f:
+        f.write('# 脚本')
+
+    assert store.books() == ['乙书', '甲书'] or store.books() == ['甲书', '乙书']
+
+
+def test_ensure_layout_creates_platform_and_book_dirs(store, monkeypatch):
+    """init 骨架：wechat/douyin 各一个，feishu 按知识库，novels 按书名"""
+    import os
+    import tools.asset_store as m
+
+    monkeypatch.setattr(type(store), 'spaces',
+                        lambda self: [{'name': '产品Wiki', 'space_id': '123'}])
+    os.makedirs(os.path.join(store.root, 'novels', '甲书', 'chapters'), exist_ok=True)
+
+    r = store.ensure_layout()
+    rel = set(r['created'])
+
+    assert {'wechat/drafts', 'wechat/published',
+            'douyin/drafts', 'douyin/published',
+            'feishu/产品Wiki/drafts', 'feishu/产品Wiki/published',
+            'novels/甲书/drafts', 'novels/甲书/published'} <= rel
+    for d in rel:
+        assert os.path.isdir(os.path.join(store.root, d))
+        assert os.path.exists(os.path.join(store.root, d, '.gitkeep'))
+
+    # 幂等：再跑一次没有新增，.gitkeep 也不进资产清单
+    again = store.ensure_layout()
+    assert again['created'] == []
+    assert store.list() == []
+
+
+def test_ensure_layout_feishu_fallback(store, monkeypatch):
+    """未配置 FEISHU_WIKI_SPACES → 回落一个占位知识库目录"""
+    import tools.asset_store as m
+
+    monkeypatch.setattr(type(store), 'spaces', lambda self: [])
+
+    r = store.ensure_layout()
+    assert f'feishu/{m.DEFAULT_FEISHU_SPACE}/drafts' in r['created']
+    assert f'feishu/{m.DEFAULT_FEISHU_SPACE}/published' in r['created']

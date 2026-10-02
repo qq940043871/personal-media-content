@@ -38,6 +38,11 @@ python media-cli.py status
 ## 统一 CLI
 
 ```bash
+# 启动器（双击 start.bat 出菜单；带参数则原样透传给 media-cli.py）
+start.bat                # Windows：交互式菜单（自检/看板/资产库/发布/装依赖/测试）
+start.bat doctor --live  # 透传：等价于 python media-cli.py doctor --live
+./start.sh status        # Git Bash 同款菜单/透传
+
 python media-cli.py status
 python media-cli.py doctor --live   # 环境自检 + LLM/发布平台探活
 
@@ -65,6 +70,7 @@ python media-cli.py publish --title "标题" --video video.mp4 \
 python -m tools.wechat publish --asset assets/wechat/drafts/x.md --json
 python -m tools.feishu publish --asset "assets/feishu/我的知识库/drafts/x.md" --json
 python -m tools.douyin publish --asset assets/douyin/drafts/v.mp4 --json
+python media-cli.py asset init                          # 建齐资产库骨架（平台×drafts/published）
 python media-cli.py asset ls --platform wechat          # 待发布资产清单
 python media-cli.py asset publish --file assets/wechat/drafts/x.md
 python media-cli.py asset spaces                        # 飞书知识库映射

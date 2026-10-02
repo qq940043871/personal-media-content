@@ -24,8 +24,10 @@
     store.list(platform='wechat')                            # 资产清单（含状态）
     store.parse_asset(path)                                  # {'platform','space','status','file'}
     store.mark_published(path, url='...', asset_id='...')    # 归档 + sidecar
+    store.ensure_layout()                                    # 幂等建齐目录骨架 + .gitkeep
 
 独立命令行：
+    python -m tools.asset_store init                         # 建齐骨架（feishu 按知识库、novels 按书名）
     python -m tools.asset_store ls [--platform wechat] [--status drafts] [--json]
     python -m tools.asset_store put --platform wechat --name x.md --content-file y.md
     python -m tools.asset_store spaces --json                # FEISHU_WIKI_SPACES 解析结果
@@ -50,6 +52,9 @@ STATUS_PUBLISHED = 'published'
 STATUS = (STATUS_DRAFT, STATUS_PUBLISHED)
 
 META_SUFFIX = '.meta.json'
+GITKEEP = '.gitkeep'
+# 飞书未配置 FEISHU_WIKI_SPACES 时的占位知识库文件夹（配置映射后重跑 init 会自动补齐真实目录）
+DEFAULT_FEISHU_SPACE = '默认知识库'
 
 
 class AssetError(ValueError):
@@ -264,6 +269,69 @@ class AssetStore:
                 return s['space_id']
         return None
 
+    # ===== 目录骨架 =====
+
+    def books(self):
+        """
+        资产库里的小说书目（assets/novels/<书名>/）
+
+        判定依据：书目目录下存在 chapters/ 或 novel/chapters/（主题文集目录没有正文目录，跳过）。
+        """
+        novels_dir = os.path.join(self.root, 'novels')
+        if not os.path.isdir(novels_dir):
+            return []
+        books = []
+        for name in sorted(os.listdir(novels_dir)):
+            if name.startswith('.'):
+                continue
+            full = os.path.join(novels_dir, name)
+            if not os.path.isdir(full):
+                continue
+            if (os.path.isdir(os.path.join(full, 'chapters'))
+                    or os.path.isdir(os.path.join(full, 'novel', 'chapters'))):
+                books.append(name)
+        return books
+
+    def ensure_layout(self, gitkeep=True, spaces=None, books=None):
+        """
+        建齐资产库骨架：平台 × 状态目录（feishu 按知识库、novels 按书名多一层）
+
+        - wechat / douyin：各一个资产文件夹，下分 drafts/ published/
+        - feishu：FEISHU_WIKI_SPACES 里每个知识库名一个文件夹；未配置时回落一个占位目录
+        - novels：每本小说（含 chapters/ 的目录）一个文件夹，下分 drafts/ published/
+
+        Args:
+            gitkeep: 空目录写 .gitkeep（git 不跟踪空目录；.gitkeep 不参与资产清单）
+            spaces: 覆盖知识库名列表（默认读 FEISHU_WIKI_SPACES）
+            books: 覆盖书目列表（默认自动识别）
+
+        Returns:
+            dict: {'root', 'created': [...], 'existing': [...]}（相对资产库根的路径）
+        """
+        created, existing = [], []
+        for pf in PLATFORM_DIRS:
+            if pf == 'feishu':
+                names = spaces if spaces is not None else \
+                    ([s['name'] for s in self.spaces()] or [DEFAULT_FEISHU_SPACE])
+            elif pf == 'novels':
+                names = books if books is not None else self.books()
+            else:
+                names = [None]
+
+            for space in names:
+                for status in STATUS:
+                    directory = self._dir(pf, space, status, create=False)
+                    rel = os.path.relpath(directory, self.root).replace('\\', '/')
+                    existed = os.path.isdir(directory)
+                    os.makedirs(directory, exist_ok=True)
+                    (existing if existed else created).append(rel)
+                    if gitkeep:
+                        keep = os.path.join(directory, GITKEEP)
+                        if not os.path.exists(keep):
+                            with open(keep, 'w', encoding='utf-8') as f:
+                                f.write('')
+        return {'root': self.root, 'created': created, 'existing': existing}
+
     # ===== 内部 =====
 
     def _dir(self, platform, space, status, create=False):
@@ -323,6 +391,9 @@ def main():
     p_pub.add_argument('--tags', nargs='*', help='抖音话题标签')
     p_pub.add_argument('--cover', help='公众号封面图路径')
 
+    p_init = sub.add_parser('init', parents=[common], help='建齐资产库目录骨架（平台×草稿/已发布）')
+    p_init.add_argument('--no-gitkeep', action='store_true', help='不写 .gitkeep 占位文件')
+
     sub.add_parser('spaces', parents=[common], help='列出 FEISHU_WIKI_SPACES 解析结果')
 
     args = parser.parse_args()
@@ -366,6 +437,20 @@ def main():
             print(json.dumps(r, ensure_ascii=False, indent=2))
         else:
             print(f"✅ 发布成功: {r.get('url', '')}" if ok else f"❌ {r.get('error')}")
+
+    elif args.action == 'init':
+        r = store.ensure_layout(gitkeep=not args.no_gitkeep)
+        if args.json:
+            print(json.dumps(r, ensure_ascii=False, indent=2))
+        elif not r['created']:
+            print(f"资产库骨架已就绪（{len(r['existing'])} 个目录，无事可做）")
+        else:
+            print(f"✅ 新建 {len(r['created'])} 个目录：")
+            for rel in r['created']:
+                print(f"   + {rel}")
+            if r['existing']:
+                print(f"   （已有 {len(r['existing'])} 个目录保持不变）")
+        ok = True
 
     elif args.action == 'spaces':
         spaces = store.spaces()

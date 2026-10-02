@@ -21,7 +21,7 @@
 | `feishu_publisher` | 飞书文档发布（可移入知识库） | `python -m tools.feishu publish --asset assets/feishu/<库>/drafts/x.md --json` | publish-feishu |
 | `douyin_publisher` | 抖音视频发布（Playwright 自动化） | `python -m tools.douyin publish --asset assets/douyin/drafts/v.mp4 --json` | publish-douyin |
 | `novel_publisher` | 小说章节批量发飞书（幂等） | `python -m tools.novel_publisher --chapters-dir <章节目录>` | novel-publish |
-| `asset_store` | 资产库读写/状态流转 | `python -m tools.asset_store ls --json` | asset-store |
+| `asset_store` | 资产库读写/状态流转/建骨架 | `python -m tools.asset_store ls --json`、`... init` | asset-store |
 
 ## 新增一个发布平台
 

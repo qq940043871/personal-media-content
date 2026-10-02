@@ -164,6 +164,25 @@ def cmd_asset_spaces(args):
         print("（FEISHU_WIKI_SPACES 未配置，在 .env 加 名称:space_id,...）")
 
 
+def cmd_asset_init(args):
+    """建齐资产库目录骨架（平台 × 草稿/已发布）"""
+    import json
+    from tools.asset_store import AssetStore
+
+    r = AssetStore(root=args.root).ensure_layout(gitkeep=not args.no_gitkeep)
+    if args.json:
+        print(json.dumps(r, ensure_ascii=False, indent=2))
+        return
+    if not r['created']:
+        print(f"✅ 资产库骨架已就绪（{len(r['existing'])} 个目录，无事可做）")
+        return
+    print(f"✅ 新建 {len(r['created'])} 个目录：")
+    for rel in r['created']:
+        print(f"   + {rel}")
+    if r['existing']:
+        print(f"   （已有 {len(r['existing'])} 个目录保持不变）")
+
+
 def register(subparsers):
     p_asset = subparsers.add_parser('asset', help='素材资产管理（标签/检索/统计）+ 待发布资产库')
     asset_sub = p_asset.add_subparsers(dest='asset_cmd', help='素材子命令')
@@ -229,3 +248,9 @@ def register(subparsers):
     p_asp.add_argument('--json', action='store_true', help='输出 JSON')
     p_asp.add_argument('--root', help='资产库根目录（默认 <仓库>/assets）')
     p_asp.set_defaults(func=cmd_asset_spaces)
+
+    p_ainit = asset_sub.add_parser('init', help='建齐资产库目录骨架（平台×草稿/已发布）')
+    p_ainit.add_argument('--no-gitkeep', action='store_true', help='不写 .gitkeep 占位文件')
+    p_ainit.add_argument('--json', action='store_true', help='输出 JSON')
+    p_ainit.add_argument('--root', help='资产库根目录（默认 <仓库>/assets）')
+    p_ainit.set_defaults(func=cmd_asset_init)

@@ -126,6 +126,29 @@ def _collect_checks(live):
     except Exception as e:
         add('素材库 assets.db', False, str(e), warn_if_fail=True)
 
+    # ---- 5.5 资产库骨架（assets/ 平台 × drafts/published）----
+    try:
+        from tools.asset_store import AssetStore, DEFAULT_FEISHU_SPACE
+        store = AssetStore()
+        expected = [(pf, None) for pf in ('wechat', 'douyin')]
+        for s in (store.spaces() or [{'name': DEFAULT_FEISHU_SPACE}]):
+            expected.append(('feishu', s['name']))
+        for book in store.books():
+            expected.append(('novels', book))
+
+        missing = []
+        for pf, space in expected:
+            for st in ('drafts', 'published'):
+                d = os.path.join(store.root, pf, *( [space] if space else [] ), st)
+                if not os.path.isdir(d):
+                    missing.append(os.path.relpath(d, store.root).replace('\\', '/'))
+        add('资产库骨架', not missing,
+            f"{len(expected) * 2} 个状态目录就绪（{store.root}）" if not missing else
+            f"缺 {len(missing)} 个: {', '.join(missing[:4])}… 跑 media-cli.py asset init 补齐",
+            warn_if_fail=True)
+    except Exception as e:
+        add('资产库骨架', False, f"{type(e).__name__}: {e}", warn_if_fail=True)
+
     # ---- 6. 探活（--live）----
     if live:
         try:

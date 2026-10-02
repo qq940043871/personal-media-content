@@ -11,6 +11,7 @@
 | [../AGENTS.md](../AGENTS.md) | Agent/协作导航与硬性约定 |
 | [../.env.example](../.env.example) | 配置模板 |
 | [DIRECTORY_STANDARD.md](DIRECTORY_STANDARD.md) | 目录与文档分层规范 |
+| `start.bat` / `start.sh` | 启动器：双击出菜单（自检/看板/资产库/发布/装依赖/测试），带参数透传 `media-cli.py` |
 
 ## 业务线
 
