@@ -1,9 +1,13 @@
 """
 配置管理模块
 使用 Pydantic Settings 管理环境变量和配置
-统一入口：同时加载 config/.env（密钥）和 .aws-article/config.yaml（写作约束）
+统一入口：同时加载 config/.env（本线覆盖）和 config/article-writing.yaml（写作约束）
+
+凭据解析优先级：本线 config/.env > 仓库根 .env 的 Provider 注册表 > 内置默认。
+模型凭据唯一存放处是仓库根 .env 的 PROVIDER_* 段，本线 .env 一般无需配置。
 """
 import os
+import sys
 from pathlib import Path
 from pydantic_settings import BaseSettings
 from functools import lru_cache
@@ -13,6 +17,7 @@ from typing import Optional, List
 # 定位 .env 文件：config/.env
 _ENV_DIR = Path(__file__).resolve().parent
 _ENV_FILE = _ENV_DIR / ".env"
+_REPO_ROOT = _ENV_DIR.parent.parent
 
 
 # 读取 .env 文件并设置到环境变量（确保 .env 优先）
@@ -38,15 +43,15 @@ _load_env_file()
 class Settings(BaseSettings):
     """应用配置 — 统一管理所有配置项"""
 
-    # ==================== LLM 模型配置（来自 .env） ====================
-    ARK_API_KEY: str
-    ARK_BASE_URL: str = "https://ark.cn-beijing.volces.com/api/v3"
-    LLM_MODEL: str = "doubao-seed-2-0-pro-260215"
+    # ==================== LLM 模型配置（本线覆盖项，留空则回落仓库根注册表） ====================
+    ARK_API_KEY: Optional[str] = None
+    ARK_BASE_URL: Optional[str] = None
+    LLM_MODEL: Optional[str] = None
 
-    # ==================== 图片生成模型配置（来自 .env） ====================
+    # ==================== 图片生成模型配置（本线覆盖项，留空则回落仓库根注册表） ====================
     IMAGE_API_KEY: Optional[str] = None  # 为空则使用 ARK_API_KEY
     IMAGE_BASE_URL: Optional[str] = None  # 为空则使用 ARK_BASE_URL
-    IMAGE_MODEL: str = "doubao-seedream-5-0-260128"
+    IMAGE_MODEL: Optional[str] = None
 
     # ==================== 微信公众号配置（来自 .env） ====================
     WECHAT_APPID: Optional[str] = None
@@ -85,8 +90,48 @@ class Settings(BaseSettings):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # 从 .aws-article/config.yaml 加载写作约束，覆盖默认值
+        # 本线未配置的模型/微信凭据，回落仓库根 Provider 注册表，再回落内置默认
+        self._fill_credentials_from_registry()
+        # 从 config/article-writing.yaml 加载写作约束，覆盖默认值
         self._merge_article_yaml()
+
+    def _fill_credentials_from_registry(self):
+        """凭据解析：本线 config/.env > 仓库根 .env 的 PROVIDER_* 注册表 > 内置默认"""
+        try:
+            if str(_REPO_ROOT) not in sys.path:
+                sys.path.insert(0, str(_REPO_ROOT))
+            from core.providers.registry import resolve
+            from core.config import config as _root_config
+        except Exception:
+            return  # 脱离仓库根独立使用时，保持纯本地配置行为
+
+        if not (self.ARK_API_KEY and self.ARK_BASE_URL and self.LLM_MODEL):
+            try:
+                c = resolve('chat')
+                self.ARK_API_KEY = self.ARK_API_KEY or c.api_key
+                self.ARK_BASE_URL = self.ARK_BASE_URL or c.base_url
+                self.LLM_MODEL = self.LLM_MODEL or c.model
+            except Exception:
+                pass
+
+        if not (self.IMAGE_API_KEY and self.IMAGE_BASE_URL and self.IMAGE_MODEL):
+            try:
+                c = resolve('image')
+                self.IMAGE_API_KEY = self.IMAGE_API_KEY or c.api_key
+                self.IMAGE_BASE_URL = self.IMAGE_BASE_URL or c.base_url
+                self.IMAGE_MODEL = self.IMAGE_MODEL or c.model
+            except Exception:
+                pass
+
+        # 内置默认（注册表也未配置时，保持历史行为可用）
+        self.ARK_BASE_URL = self.ARK_BASE_URL or "https://ark.cn-beijing.volces.com/api/v3"
+        self.LLM_MODEL = self.LLM_MODEL or "doubao-seed-2-0-pro-260215"
+        self.IMAGE_BASE_URL = self.IMAGE_BASE_URL or "https://ark.cn-beijing.volces.com/api/v3/images/generations"
+        self.IMAGE_MODEL = self.IMAGE_MODEL or "doubao-seedream-4-5-251128"
+
+        if not (self.WECHAT_APPID and self.WECHAT_APPSECRET):
+            self.WECHAT_APPID = self.WECHAT_APPID or _root_config.WECHAT_APP_ID
+            self.WECHAT_APPSECRET = self.WECHAT_APPSECRET or _root_config.WECHAT_APP_SECRET
 
     def _merge_article_yaml(self):
         """从 config/article-writing.yaml 加载写作约束，合并到当前实例"""
@@ -120,7 +165,7 @@ class Settings(BaseSettings):
                 if yaml_key in yaml_config:
                     setattr(self, field_name, yaml_config[yaml_key])
         except Exception as e:
-            print(f"[WARN] 加载 .aws-article/config.yaml 失败: {e}")
+            print(f"[WARN] 加载 config/article-writing.yaml 失败: {e}")
 
     def get_article_config(self) -> dict:
         """返回兼容旧版 load_article_config() 格式的 dict"""

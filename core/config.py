@@ -25,6 +25,23 @@ else:
     # 兼容旧版：如果根目录没有 .env，尝试各子项目内的 .env
     load_dotenv()
 
+from .providers.registry import resolve as resolve_provider, ProviderError as ProviderConfigError
+
+# 注册表解析结果（导入期解析失败不阻断，错误详情留给 doctor / 调用方）
+PROVIDER_ERRORS = {}
+
+
+def _resolve_or_legacy(task, legacy_key, legacy_url, legacy_model, default_url='', default_model=''):
+    """优先 Provider 注册表，未配置时回落旧键；返回 (api_key, base_url, model)"""
+    try:
+        c = resolve_provider(task)
+        return c.api_key, c.base_url, c.model
+    except ProviderConfigError as e:
+        PROVIDER_ERRORS[task] = str(e)
+        return (os.getenv(legacy_key, ''),
+                os.getenv(legacy_url, default_url),
+                os.getenv(legacy_model, default_model))
+
 
 class Config:
     """全局配置类 — 所有业务线共享"""
@@ -32,17 +49,23 @@ class Config:
     # ===== 基础路径 =====
     BASE_DIR = BASE_DIR
 
-    # ===== LLM 大模型配置（小米 mimo）=====
-    LLM_API_KEY = os.getenv('LLM_API_KEY', '')
-    LLM_API_URL = os.getenv('LLM_API_URL', 'https://api.xiaomimimo.com/v1/chat/completions')
-    LLM_MODEL = os.getenv('LLM_MODEL', 'mimo-v2.6-pro')
+    # ===== LLM 大模型配置（凭据来自根 .env 的 Provider 注册表，LLM_PROVIDER 选择）=====
+    (_llm_key, _llm_url, _llm_model) = _resolve_or_legacy(
+        'chat', 'LLM_API_KEY', 'LLM_API_URL', 'LLM_MODEL',
+        'https://api.xiaomimimo.com/v1/chat/completions', 'mimo-v2.6-pro')
+    LLM_API_KEY = _llm_key
+    LLM_API_URL = _llm_url
+    LLM_MODEL = _llm_model
     LLM_TEMPERATURE = float(os.getenv('LLM_TEMPERATURE', '0.7'))
     LLM_MAX_TOKENS = int(os.getenv('LLM_MAX_TOKENS', '4096'))
 
-    # ===== ASR 语音转写配置（云端：小米 mimo）=====
-    ASR_API_KEY = os.getenv('ASR_API_KEY', '')
-    ASR_API_URL = os.getenv('ASR_API_URL', 'https://api.xiaomimimo.com/v1/chat/completions')
-    ASR_MODEL = os.getenv('ASR_MODEL', 'mimo-v2.5-asr')
+    # ===== ASR 语音转写配置（注册表 ASR_PROVIDER 选择；云端走 input_audio 格式）=====
+    (_asr_key, _asr_url, _asr_model) = _resolve_or_legacy(
+        'asr', 'ASR_API_KEY', 'ASR_API_URL', 'ASR_MODEL',
+        'https://api.xiaomimimo.com/v1/chat/completions', 'mimo-v2.5-asr')
+    ASR_API_KEY = _asr_key
+    ASR_API_URL = _asr_url
+    ASR_MODEL = _asr_model
     ASR_LANGUAGE = os.getenv('ASR_LANGUAGE', 'zh')
 
     # ===== 本地 ASR 配置（faster-whisper）=====
