@@ -22,7 +22,7 @@
 | 公众号官方 | [../hello_webchat_official/README.md](../hello_webchat_official/README.md) | `.claude/skills/**/SKILL.md` |
 | 公众号 Solo | [../hello_webchat_solo/README.md](../hello_webchat_solo/README.md) | `CLAUDE.md`（程序架构） |
 | 书评分析 | [../hello_weixin_book/README.md](../hello_weixin_book/README.md) | [INDEX.md](../hello_weixin_book/INDEX.md) |
-| 个人博客 | [../blog/index.html](../blog/index.html)（静态站） | `_seed/` 种子与生成脚本（依赖工作台知识库，`KB_ROOT` 可覆盖） |
+| 亲情短视频稿 | [../family-life-video/README.md](../family-life-video/README.md) | `<主题>/短视频脚本.md`、`视频分镜脚本.md` |
 | 发布工作台 | [../publish_workbench/README.md](../publish_workbench/README.md) | `index.html` 单文件 APP（公众号/抖音/飞书发布跟踪，数据存浏览器 localStorage） |
 
 ## 小说作品索引
@@ -38,6 +38,9 @@
 
 | 文档 | 位置 |
 |------|------|
+| 平台架构（Provider 注册表 / 发布契约 / CLI） | [../ARCHITECTURE.md](../ARCHITECTURE.md) |
+| 环境自检 | `python media-cli.py doctor --live`（命令实现 `cli/commands/doctor.py`） |
+| 平台层单测 | `../tests/`（pytest） |
 | 飞书流水线架构细节 | `hello_feishu/CLAUDE.md` |
 | Solo 公众号程序架构 | `hello_webchat_solo/CLAUDE.md` |
 | 时间裂隙创作系统 | `hello_novel/novels/time_rift/README.md`、`AGENTS.md` |
@@ -53,6 +56,7 @@
 | Solo 生成文章 | `hello_webchat_solo/output/`（运行时生成，不入库） |
 | 飞书流水线产物 | `hello_feishu/output/`（运行时生成，不入库）、`articles/` |
 | 短视频媒体 | `hello_doubao_video/media/`（mp4 原件不入库） |
+| 亲情短视频口播/分镜稿 | `family-life-video/<主题>/` |
 
 ## 跨仓文档
 

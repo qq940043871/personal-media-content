@@ -41,6 +41,7 @@ def _collect_checks(live):
     # ---- 1. core / .env ----
     try:
         from core.config import config, PROVIDER_ERRORS
+        add('core 导入', True, f"BASE_DIR={config.BASE_DIR}")
     except Exception as e:
         add('core 导入', False, f'{type(e).__name__}: {e}')
         return checks

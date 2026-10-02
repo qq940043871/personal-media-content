@@ -1,6 +1,27 @@
 # 目录与文档规范
 
-适用于本仓库所有业务线，保证「过程 / 内容 / 说明 / 素材」可分离、可检索。
+适用于本仓库所有业务线与平台层，保证「过程 / 内容 / 说明 / 素材」可分离、可检索。
+
+## 0. 平台层结构（core / cli / tests / dashboard）
+
+平台层代码与业务线分离，约定：
+
+```
+core/                # 共享能力层
+├── providers/       # 模型接入（registry 解析 + llm/asr 客户端）——新模型能力放这里
+├── publisher_base.py + feishu/wechat_publisher.py   # 发布契约与实现
+└── （storage/task/asset/video/story 等域模块平铺）
+cli/commands/        # media-cli 的命令域，一域一模块，含 register(subparsers)
+tests/               # 平台层 pytest；业务线手工冒烟脚本仍留在各线 tests/
+dashboard/templates/ # 看板 HTML 模板（与 app.py 分离）
+```
+
+平台层变更规则：
+
+- 新模型 provider：只改根 `.env` 注册表（见 `.env.example`），不改代码；新「能力类型」（如 tts）才动 `core/providers/registry.py`
+- 新发布平台：实现 `core/publisher_base.BasePublisher` 并在 `_load_publisher` 登记
+- 新 CLI 命令：在 `cli/commands/` 对应域模块加 `cmd_*` + `register()`；顶层入口 `media-cli.py` 不加业务逻辑
+- 平台行为回归：`python -m pytest tests/`（依赖 `requirements-dev.txt`）
 
 ## 1. 分层定义
 
