@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 内容生产中台 — 总览</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+           background: #f5f7fa; color: #1a1a2e; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white; padding: 24px 32px; }
+    .header h1 { font-size: 24px; margin-bottom: 4px; }
+    .header p { opacity: 0.9; font-size: 14px; }
+    .nav { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 0 32px; }
+    .nav a { display: inline-block; padding: 14px 20px; color: #555; text-decoration: none;
+             border-bottom: 3px solid transparent; font-size: 14px; }
+    .nav a.active { color: #667eea; border-bottom-color: #667eea; font-weight: 600; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px 32px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+             gap: 16px; margin-bottom: 24px; }
+    .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .card .label { font-size: 13px; color: #888; margin-bottom: 8px; }
+    .card .value { font-size: 28px; font-weight: 700; color: #1a1a2e; }
+    .card .sub { font-size: 12px; color: #aaa; margin-top: 4px; }
+    .card.green .value { color: #10b981; }
+    .card.red .value { color: #ef4444; }
+    .card.blue .value { color: #3b82f6; }
+    .card.purple .value { color: #8b5cf6; }
+    .section { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px;
+               box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .section h2 { font-size: 16px; margin-bottom: 16px; padding-bottom: 12px;
+                  border-bottom: 1px solid #eee; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+    th { color: #888; font-weight: 500; font-size: 12px; text-transform: uppercase; }
+    .status { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+    .status.done { background: #d1fae5; color: #065f46; }
+    .status.running { background: #dbeafe; color: #1e40af; }
+    .status.pending { background: #fef3c7; color: #92400e; }
+    .status.failed { background: #fee2e2; color: #991b1b; }
+    .status.skipped { background: #e5e7eb; color: #374151; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎬 AI 内容生产中台</h1>
+    <p>短视频 · 图文文章 · 长篇小说 · 全链路内容生产管理</p>
+  </div>
+  <div class="nav">
+    <a href="/" class="active">📊 总览</a>
+    <a href="/tasks">📋 任务中心</a>
+    <a href="/assets">📦 素材库</a>
+  </div>
+  <div class="container">
+    <div class="cards" id="stats-cards"></div>
+
+    <div class="section">
+      <h2>🕐 最近任务</h2>
+      <table>
+        <thead><tr><th>状态</th><th>任务名</th><th>类型</th><th>创建时间</th><th>耗时</th></tr></thead>
+        <tbody id="recent-tasks"></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+async function loadStats() {
+  const res = await fetch('/api/stats');
+  const data = await res.json();
+  const t = data.tasks;
+  const a = data.assets;
+  const s = data.storage;
+
+  document.getElementById('stats-cards').innerHTML = `
+    <div class="card blue"><div class="label">任务总数</div><div class="value">${t.total}</div><div class="sub">今日完成 ${t.today_done} · 失败 ${t.today_failed}</div></div>
+    <div class="card green"><div class="label">已完成任务</div><div class="value">${t.by_status.done || 0}</div><div class="sub">平均耗时 ${t.avg_duration_seconds}s</div></div>
+    <div class="card"><div class="label">待处理</div><div class="value">${t.by_status.pending || 0}</div><div class="sub">运行中 ${t.by_status.running || 0}</div></div>
+    <div class="card purple"><div class="label">素材资产</div><div class="value">${a.total}</div><div class="sub">${a.tag_count} 个标签 · ${a.total_size_mb} MB</div></div>
+    <div class="card green"><div class="label">输入视频</div><div class="value">${s.videos_input}</div><div class="sub">videos_input</div></div>
+    <div class="card blue"><div class="label">文章数量</div><div class="value">${s.articles}</div><div class="sub">articles</div></div>
+    <div class="card"><div class="label">小说项目</div><div class="value">${s.novel_projects}</div><div class="sub">novels</div></div>
+  `;
+}
+
+async function loadRecentTasks() {
+  const res = await fetch('/api/tasks?limit=10');
+  const data = await res.json();
+  const tbody = document.getElementById('recent-tasks');
+  tbody.innerHTML = data.tasks.map(t => `
+    <tr>
+      <td><span class="status ${t.status}">${t.status}</span></td>
+      <td>${t.name}</td>
+      <td>${t.task_type}</td>
+      <td>${t.created_at_str}</td>
+      <td>${t.duration ? t.duration.toFixed(1) + 's' : '-'}</td>
+    </tr>
+  `).join('');
+}
+
+loadStats();
+loadRecentTasks();
+setInterval(() => { loadStats(); loadRecentTasks(); }, 10000);
+</script>
+</body>
+</html>

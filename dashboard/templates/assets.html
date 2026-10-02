@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>素材库 — AI 内容生产中台</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+           background: #f5f7fa; color: #1a1a2e; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white; padding: 24px 32px; }
+    .header h1 { font-size: 24px; margin-bottom: 4px; }
+    .nav { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 0 32px; }
+    .nav a { display: inline-block; padding: 14px 20px; color: #555; text-decoration: none;
+             border-bottom: 3px solid transparent; font-size: 14px; }
+    .nav a.active { color: #667eea; border-bottom-color: #667eea; font-weight: 600; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px 32px; }
+    .sidebar-layout { display: grid; grid-template-columns: 240px 1fr; gap: 16px; }
+    .sidebar { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); height: fit-content; }
+    .sidebar h3 { font-size: 14px; margin-bottom: 12px; color: #666; }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag { padding: 4px 10px; background: #f0f2f5; border-radius: 12px; font-size: 12px;
+           cursor: pointer; color: #555; }
+    .tag.active { background: #667eea; color: white; }
+    .content { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; }
+    .search-bar { padding: 16px 20px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 12px; align-items: center; }
+    .search-bar input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+    .search-bar select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+    th { background: #fafbfc; color: #888; font-weight: 500; font-size: 12px; text-transform: uppercase; }
+    .type-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: #eef2ff; color: #4338ca; }
+    .tag-small { display: inline-block; padding: 2px 6px; background: #f3f4f6; border-radius: 4px; font-size: 11px; color: #666; margin-right: 4px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📦 素材库</h1>
+    <p>统一管理所有内容资产</p>
+  </div>
+  <div class="nav">
+    <a href="/">📊 总览</a>
+    <a href="/tasks">📋 任务中心</a>
+    <a href="/assets" class="active">📦 素材库</a>
+  </div>
+  <div class="container">
+    <div class="sidebar-layout">
+      <div class="sidebar">
+        <h3>🏷️ 标签</h3>
+        <div class="tag-list" id="tag-list"></div>
+        <h3 style="margin-top:20px;">📊 统计</h3>
+        <div id="side-stats" style="font-size:13px; color:#555; line-height:1.8;"></div>
+      </div>
+      <div class="content">
+        <div class="search-bar">
+          <input type="text" id="search-input" placeholder="按标签搜索，逗号分隔多个标签...">
+          <select id="type-filter">
+            <option value="">全部类型</option>
+          </select>
+          <button onclick="doSearch()" style="padding:8px 16px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;">搜索</button>
+        </div>
+        <table>
+          <thead><tr><th>类型</th><th>标题</th><th>项目</th><th>标签</th><th>大小</th><th>更新时间</th></tr></thead>
+          <tbody id="asset-list"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script>
+let selectedTags = [];
+
+async function loadTags() {
+  const res = await fetch('/api/tags');
+  const data = await res.json();
+  const list = document.getElementById('tag-list');
+  list.innerHTML = data.tags.map(t =>
+    `<span class="tag" onclick="toggleTag('${t}')">${t}</span>`
+  ).join('');
+}
+
+async function loadStats() {
+  const res = await fetch('/api/assets?limit=1');
+  const data = await res.json();
+  const s = data.stats;
+  const typeFilter = document.getElementById('type-filter');
+  Object.keys(s.by_type || {}).forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = `${t} (${s.by_type[t]})`;
+    typeFilter.appendChild(opt);
+  });
+
+  document.getElementById('side-stats').innerHTML = `
+    总数：<strong>${s.total}</strong><br>
+    标签数：<strong>${s.tag_count}</strong><br>
+    总大小：<strong>${s.total_size_mb} MB</strong><br>
+    ${Object.entries(s.by_project || {}).map(([p,c]) => `${p}: ${c}`).join('<br>')}
+  `;
+}
+
+async function loadAssets() {
+  const type = document.getElementById('type-filter').value;
+  const params = new URLSearchParams();
+  if (type) params.set('type', type);
+  params.set('limit', 50);
+
+  const res = await fetch('/api/assets?' + params);
+  const data = await res.json();
+  renderAssets(data.assets);
+}
+
+async function doSearch() {
+  const q = document.getElementById('search-input').value.trim();
+  const tags = q.split(',').map(t => t.trim()).filter(t => t);
+  if (!tags.length && !selectedTags.length) {
+    loadAssets();
+    return;
+  }
+  const allTags = [...new Set([...tags, ...selectedTags])];
+  const res = await fetch('/api/assets/search?tags=' + encodeURIComponent(allTags.join(',')));
+  const data = await res.json();
+  renderAssets(data.assets);
+}
+
+function renderAssets(assets) {
+  const tbody = document.getElementById('asset-list');
+  tbody.innerHTML = assets.map(a => `
+    <tr>
+      <td><span class="type-badge">${a.asset_type}</span></td>
+      <td>${a.title}</td>
+      <td>${a.project || '-'}</td>
+      <td>${a.tags.slice(0,3).map(t => `<span class="tag-small">${t}</span>`).join('')}</td>
+      <td>${(a.file_size / 1024).toFixed(1)} KB</td>
+      <td>${a.updated_at}</td>
+    </tr>
+  `).join('');
+}
+
+function toggleTag(tag) {
+  const idx = selectedTags.indexOf(tag);
+  if (idx >= 0) selectedTags.splice(idx, 1);
+  else selectedTags.push(tag);
+  document.querySelectorAll('.tag').forEach(el => {
+    el.classList.toggle('active', selectedTags.includes(el.textContent));
+  });
+  doSearch();
+}
+
+loadTags();
+loadStats();
+loadAssets();
+</script>
+</body>
+</html>
