@@ -65,8 +65,18 @@ class LLMProcessor:
 
     # ---- 完整文章生成（4步流水线）----
 
+    @staticmethod
+    def _extract_transcript(video_data):
+        """兼容 transcript / text 两种键名（旧调用方与测试脚本多用 'text'）"""
+        transcript = (video_data.get('transcript') or video_data.get('text') or '').strip()
+        if not transcript:
+            raise ValueError(
+                "转写文本为空（video_data 缺少 'transcript'/'text' 键或内容为空白）。"
+                "拒绝在空输入上生成文章——空输入会让模型自由发挥或拒绝，产生看似成功的垃圾结果。")
+        return transcript
+
     def generate_full_article(self, video_data):
-        transcript = video_data.get('transcript', '')
+        transcript = self._extract_transcript(video_data)
         frames = video_data.get('frames', [])
         video_info = video_data.get('video_info', {})
 
@@ -95,7 +105,7 @@ class LLMProcessor:
 
     def generate_full_article_stream(self, video_data, save_path=None):
         """流式生成完整文章（4步流水线，边生成边打印）"""
-        transcript = video_data.get('transcript', '')
+        transcript = self._extract_transcript(video_data)
         frames = video_data.get('frames', [])
         video_info = video_data.get('video_info', {})
 

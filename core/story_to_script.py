@@ -214,13 +214,13 @@ class StoryToScript:
             for line in scene_text.split('\n'):
                 line = line.strip()
                 if line.startswith('概述：'):
-                    scene['description'] = line[4:].strip()
+                    scene['description'] = line[3:].strip()
                 elif line.startswith('人物：'):
-                    scene['characters'] = line[4:].strip()
+                    scene['characters'] = line[3:].strip()
                 elif line.startswith('地点：'):
-                    scene['location'] = line[4:].strip()
+                    scene['location'] = line[3:].strip()
                 elif line.startswith('情绪：'):
-                    scene['mood'] = line[4:].strip()
+                    scene['mood'] = line[3:].strip()
             if scene:
                 result['scenes'].append(scene)
 
@@ -246,11 +246,12 @@ class StoryToScript:
 {scenes_text}
 
 要求：
-1. 共 {num_shots} 个分镜，每个分镜对应一个关键画面
-2. 每个分镜包含：分镜序号、景别（远景/全景/中景/近景/特写）、画面描述、镜头运动、时长建议
-3. 画面描述要具体、有画面感，适合作为AI视频生成的提示词
-4. 分镜之间要有节奏感，有张有弛
-5. 最后一个分镜要有结尾感（留白/悬念/情绪升华）
+1. 分镜必须严格忠于上面的场景列表——人物、地点、事件、情绪都要与场景一致，禁止引入场景中不存在的设定或与剧情无关的通用模板画面
+2. 共 {num_shots} 个分镜，每个分镜对应一个关键画面
+3. 每个分镜包含：分镜序号、景别（远景/全景/中景/近景/特写）、画面描述、镜头运动、时长建议
+4. 画面描述要具体、有画面感，适合作为AI视频生成的提示词
+5. 分镜之间要有节奏感，有张有弛
+6. 最后一个分镜要有结尾感（留白/悬念/情绪升华）
 
 请严格按以下格式输出：
 
@@ -299,7 +300,7 @@ class StoryToScript:
         for shot in shots:
             prompt = (
                 f"{style_config['visual']}，{style_config['color']}。"
-                f"{shot.get('shot_type', '')}，{shot.get('description', '')}。"
+                f"{shot.get('shot_type', '')}，{shot.get('description', '').rstrip('。')}。"
                 f"镜头：{shot.get('camera_movement', '固定镜头')}。"
                 f"电影级画质，高细节， cinematic composition。"
             )

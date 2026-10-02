@@ -254,6 +254,17 @@ async def review_article_node(state: ArticleState) -> dict:
     if len(title) > 30:
         issues.append({"level": "warning", "type": "标题过长", "message": f"标题 {len(title)} 字，建议控制在 15 字以内"})
 
+    # 6. 事实性风险：第一手实测/压测类数据断言（编造风险）
+    #    关键词断言与性能指标数字分别出现即视为风险（同段/跨段都可能）
+    claim = re.search(r'(亲测|实测|我们测试|真实压测|压测数据|实测数据|跑了[一几]遍?压测)', content_markdown)
+    metrics = re.search(r'(QPS|P9[59]|吞吐|并发|延迟[^\n]{0,10}\d|[压内][测存][^\n]{0,10}\d+\s*(ms|GB|%))', content_markdown)
+    if claim and metrics:
+        issues.append({
+            "level": "warning", "type": "事实性风险",
+            "message": "文中出现第一手实测/压测类数据断言：请核实来源真实性；"
+                       "若无真实测试依据，改写为估算口径或引用公开 benchmark，避免编造数据误导读者",
+        })
+
     # 判断等级
     block_issues = [i for i in issues if i["level"] == "block"]
     review_level = "block" if block_issues else ("warning" if issues else "pass")

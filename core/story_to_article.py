@@ -36,26 +36,31 @@ class StoryToArticle:
             'name': '深度解读',
             'description': '深度解读章节内容，分析人物心理、剧情伏笔、世界观设定',
             'audience': '核心读者 / 粉丝',
+            'length': '1500-2500 字',
         },
         'summary': {
             'name': '剧情速读',
             'description': '快速回顾章节剧情，适合没时间看原文的读者',
             'audience': '普通读者 / 追更党',
+            'length': '1200-2000 字（速读要短：读者只想花两三分钟了解剧情，宁精炼勿注水）',
         },
         'character': {
             'name': '人物分析',
             'description': '聚焦人物成长、性格变化、关系演变',
             'audience': '角色粉 / CP粉',
+            'length': '1500-2500 字',
         },
         'worldview': {
             'name': '世界观科普',
             'description': '从章节内容扩展，科普世界观设定、修炼体系等',
             'audience': '设定党 / 考据党',
+            'length': '1500-2500 字',
         },
         'feature': {
             'name': '专题合集',
             'description': '多章节合集，形成专题文章',
             'audience': '新读者 / 入坑指南',
+            'length': '2500-4000 字',
         },
     }
 
@@ -264,7 +269,7 @@ class StoryToArticle:
 3. 结构清晰，使用小标题分段
 4. 内容要有料，不是简单复述，要有分析和解读
 5. 结尾要有互动引导（提问、留言引导等）
-6. 总字数 1500-2500 字
+6. 总字数{type_config['length']}，严格执行（统计正文可见字数，不含 Markdown 标记）
 7. 使用 Markdown 格式
 8. 语言风格：轻松但有深度，像和朋友聊天一样自然
 
