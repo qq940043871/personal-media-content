@@ -34,15 +34,15 @@ class Config:
 
     # ===== LLM 大模型配置（小米 mimo）=====
     LLM_API_KEY = os.getenv('LLM_API_KEY', '')
-    LLM_API_URL = os.getenv('LLM_API_URL', 'https://api.mimirobot.cn/api/text/chat')
-    LLM_MODEL = os.getenv('LLM_MODEL', 'mimi-3.5')
+    LLM_API_URL = os.getenv('LLM_API_URL', 'https://api.xiaomimimo.com/v1/chat/completions')
+    LLM_MODEL = os.getenv('LLM_MODEL', 'mimo-v2.6-pro')
     LLM_TEMPERATURE = float(os.getenv('LLM_TEMPERATURE', '0.7'))
     LLM_MAX_TOKENS = int(os.getenv('LLM_MAX_TOKENS', '4096'))
 
     # ===== ASR 语音转写配置（云端：小米 mimo）=====
     ASR_API_KEY = os.getenv('ASR_API_KEY', '')
-    ASR_API_URL = os.getenv('ASR_API_URL', 'https://api.mimirobot.cn/api/audio/transcript')
-    ASR_MODEL = os.getenv('ASR_MODEL', 'mimi-audio')
+    ASR_API_URL = os.getenv('ASR_API_URL', 'https://api.xiaomimimo.com/v1/chat/completions')
+    ASR_MODEL = os.getenv('ASR_MODEL', 'mimo-v2.5-asr')
     ASR_LANGUAGE = os.getenv('ASR_LANGUAGE', 'zh')
 
     # ===== 本地 ASR 配置（faster-whisper）=====

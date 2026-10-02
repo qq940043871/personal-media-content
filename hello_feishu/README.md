@@ -50,15 +50,15 @@ pip install -r requirements.txt
 复制 `.env.example` 或手动创建 `.env`：
 
 ```env
-# === LLM (小米 mimo) ===
+# === LLM (小米 MiMo，OpenAI 兼容) ===
 LLM_API_KEY=你的key
-LLM_API_URL=https://api.mimirobot.cn/api/text/chat
-LLM_MODEL=mimi-3.5
+LLM_API_URL=https://api.xiaomimimo.com/v1/chat/completions
+LLM_MODEL=mimo-v2.6-pro
 
-# === 云端 ASR (小米音频理解) ===
+# === 云端 ASR (mimo-v2.5-asr，走 chat/completions + input_audio) ===
 ASR_API_KEY=你的key
-ASR_API_URL=https://api.mimirobot.cn/api/audio/transcript
-ASR_MODEL=mimi-audio
+ASR_API_URL=https://api.xiaomimimo.com/v1/chat/completions
+ASR_MODEL=mimo-v2.5-asr
 
 # === 本地 ASR (可选, faster-whisper) ===
 ASR_LOCAL_ENABLED=false

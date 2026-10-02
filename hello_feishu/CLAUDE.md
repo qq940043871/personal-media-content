@@ -44,7 +44,7 @@ python scripts/batch_process.py
 
 `Config` class reads from `.env` via `python-dotenv`. All paths are relative to `BASE_DIR`. Key config groups:
 - Feishu: `FEISHU_APP_ID`, `FEISHU_APP_SECRET`
-- LLM: `LLM_API_KEY`, `LLM_API_URL`, `LLM_MODEL` (default: `mimi-3.5`)
+- LLM: `LLM_API_KEY`, `LLM_API_URL`, `LLM_MODEL` (default: `mimo-v2.6-pro`，接口 `https://api.xiaomimimo.com/v1/chat/completions`)
 - ASR cloud: `ASR_API_KEY`, `ASR_API_URL`
 - ASR local: `ASR_LOCAL_ENABLED`, `ASR_LOCAL_MODEL_SIZE`, `ASR_LOCAL_DEVICE`, `ASR_LOCAL_COMPUTE_TYPE`
 - Video: `FFMPEG_PATH`, `FRAME_INTERVAL`, `OUTPUT_QUALITY`

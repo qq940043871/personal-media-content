@@ -19,7 +19,6 @@ ASR 语音转写客户端 — 支持云端（小米 mimo）和本地（faster-wh
 import os
 import requests
 import base64
-import mimetypes
 from .config import config
 
 
@@ -56,10 +55,10 @@ class ASRClient:
                     'error': f"音频文件过大({audio_size / 1024 / 1024:.2f}MB)，云端Base64方式不能超过50MB"
                 }
 
-            audio_data_url = self._build_audio_data_url(audio_path)
+            audio_b64, audio_format = self._load_audio_b64(audio_path)
 
             headers = {
-                'api-key': self.api_key,
+                'Authorization': f'Bearer {self.api_key}',
                 'Content-Type': 'application/json'
             }
 
@@ -67,24 +66,16 @@ class ASRClient:
                 'model': self.model,
                 'messages': [
                     {
-                        'role': 'system',
-                        'content': '你是一个专业的语音转写助手，请将音频内容准确转写为文字。只输出转写的文字内容，不要添加任何额外说明或格式。'
-                    },
-                    {
                         'role': 'user',
                         'content': [
                             {
                                 'type': 'input_audio',
-                                'input_audio': {'data': audio_data_url}
-                            },
-                            {
-                                'type': 'text',
-                                'text': '请将音频中的语音内容准确转写为文字，只输出转写结果，不要添加任何说明。'
+                                'input_audio': {'data': audio_b64, 'format': audio_format}
                             }
                         ]
                     }
                 ],
-                'max_completion_tokens': 4096
+                'max_tokens': 4096
             }
 
             response = requests.post(self.api_url, headers=headers, json=payload, timeout=300)
@@ -104,24 +95,19 @@ class ASRClient:
             print(f"[ASR] {error_msg}")
             return {'success': False, 'error': error_msg}
 
-    def _build_audio_data_url(self, audio_path):
-        """构建带 MIME 类型前缀的 Base64 数据 URL"""
-        mime_type, _ = mimetypes.guess_type(audio_path)
-        if not mime_type:
-            ext = os.path.splitext(audio_path)[1].lower()
-            mime_map = {
-                '.mp3': 'audio/mpeg',
-                '.wav': 'audio/wav',
-                '.flac': 'audio/flac',
-                '.m4a': 'audio/mp4',
-                '.ogg': 'audio/ogg'
-            }
-            mime_type = mime_map.get(ext, 'audio/mpeg')
+    def _load_audio_b64(self, audio_path):
+        """读取音频为 Base64，并返回 OpenAI input_audio 需要的格式名"""
+        ext = os.path.splitext(audio_path)[1].lower().lstrip('.')
+        format_map = {
+            'mp3': 'mp3', 'wav': 'wav', 'flac': 'flac',
+            'm4a': 'm4a', 'ogg': 'ogg', 'aac': 'aac'
+        }
+        audio_format = format_map.get(ext, 'mp3')
 
         with open(audio_path, 'rb') as f:
             audio_base64 = base64.b64encode(f.read()).decode('utf-8')
 
-        return f"data:{mime_type};base64,{audio_base64}"
+        return audio_base64, audio_format
 
     def _parse_cloud_response(self, result):
         """解析云端 API 响应"""
