@@ -75,7 +75,8 @@ class DouyinPublisher(BasePublisher):
     platform_name = '抖音'
 
     CREATOR_HOME = 'https://creator.douyin.com/'
-    UPLOAD_URL = 'https://creator.douyin.com/creator-micro/content/upload'
+    # 2026-10 起抖音发布页迁移为 content/post/video（旧 content/upload 会重定向，直达少一次跳转）
+    UPLOAD_URL = 'https://creator.douyin.com/creator-micro/content/post/video?enter_from=publish_page'
     MANAGE_URL = 'https://creator.douyin.com/creator-micro/content/manage'
 
     # 创作者后台改版时集中调整这些选择器
@@ -243,6 +244,11 @@ class DouyinPublisher(BasePublisher):
                 if not self._wait_publish_done(page):
                     raise RuntimeError('已点击发布但未确认到成功回执，'
                                        '请先到创作者后台核对，避免重复发布')
+                # 回执可能是假阳性（页面跳转≠作品落库）：到内容管理页核对标题
+                if not self._verify_in_manage(page, text):
+                    raise RuntimeError('发布回执已确认，但内容管理页未见该作品'
+                                       '（可能被平台秒删或仍在入库延迟）——'
+                                       '请先到创作者后台人工核对，避免盲目重发')
             finally:
                 browser.close()
         return {'video': video_path, 'tags': tags, 'confirmed': True}
@@ -327,6 +333,22 @@ class DouyinPublisher(BasePublisher):
             if 'content/manage' in page.url or self._has_text(page, ('发布成功',)):
                 return True
             page.wait_for_timeout(1500)
+        return False
+
+    def _verify_in_manage(self, page, text, timeout=30):
+        """发布后核验：内容管理页的作品列表里应能找到文案片段（回执可能假阳性）"""
+        import re as _re
+        frags = [f for f in _re.split(r'[，。｜|#!\s]+', text or '') if len(f) >= 4]
+        if not frags:
+            frags = [text] if text else []
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            page.goto(self.MANAGE_URL, wait_until='domcontentloaded', timeout=60000)
+            page.wait_for_timeout(5000)
+            body = page.inner_text('body')
+            if any(f in body for f in frags):
+                return True
+            page.wait_for_timeout(5000)
         return False
 
 
