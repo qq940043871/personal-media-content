@@ -8,8 +8,10 @@
 - 小说：assets/novels/<书>/{chapters, novel/chapters} 下的 .txt/.md 正文
        （两代目录布局都认；README 等说明文件不计）
 - 主题/文集：assets/novels/<主题>/ 下的 .md（亲情视频脚本、写作指南等；不含章节目录的子目录）
-- 资产：assets/ 待发布资产库（创作域 novels/articles/videos/wikis × drafts/published，
-       不含 .meta.json 与隐藏文件；路径规则见 publishing/asset_store.py）
+- 资产：assets/ 待发布资产库，按文件夹内容自动盘点——遍历各创作域下的 <工程>/drafts|published，
+       状态目录里散文件各计 1 篇、技能线的 <篇名>/ 工作区文件夹计 1 篇（按主文件计字数）；
+       .gitkeep、.meta.json 与隐藏文件不计；兼容旧版平铺（wechat|douyin/<状态>/、feishu/<库>/<状态>/）
+       路径规则见 publishing/asset_store.py
 - 成片：system/storage/videos_output/<项目> 子目录（成片原件不入库，本机为准）
 - 发布：system/storage/db/feishu_published.json（小说批量发飞书幂等记录）
        + projects.db 发布记录（工作台/后续产线写入）
@@ -34,6 +36,10 @@ SKIP_PREFIXES = ('README', 'readme')
 NOVELS_ROOT = os.path.join('assets', 'novels')
 ANALYSES_DIR = os.path.join('hello_weixin_book', 'analyses')  # 2026-10 已迁出（personal-read-book），恒为 0
 ASSET_STATUSES = ('drafts', 'published')
+ASSET_TEXT_EXTS = ('.md', '.txt')
+META_SUFFIX = '.meta.json'
+# 旧版平台平铺目录 → 归并到的创作域（2026-10 前布局，兼容读取）
+LEGACY_TYPE_DIRS = {'wechat': 'articles', 'douyin': 'videos', 'feishu': 'wikis'}
 
 
 def _is_chapter_file(name):
@@ -110,47 +116,91 @@ class ContentInventory:
 
     def scan_assets(self):
         """
-        待发布资产库盘点（assets/，创作域/工程 × drafts/published）
+        待发布资产库盘点（assets/，创作域/工程 × drafts/published）— 按文件夹内容自动统计
 
-        feishu/novels 下隔一层知识库/书名文件夹，用 os.walk 按目录名识别状态层；
-        .gitkeep、.meta.json 与隐藏文件不计。
+        识别 assets/ 下任意一层 <工程>/<状态>/ 结构（状态目录 = drafts|published）：
+        - 状态目录里的散文件各计 1 篇（.meta.json / 隐藏文件不计）
+        - 技能线的 <篇名>/ 工作区文件夹计 1 篇，字数取夹内全部 .md/.txt，主文件取
+          夹根下最大的 .md/.txt（如 article.md）；仅含 .gitkeep 等隐藏文件的空夹不计
+        - 顶层目录名按创作域归并（旧平铺 wechat→articles、douyin→videos、feishu→wikis，
+          其余原样作为域）；wechat/douyin 旧平铺无工程名，不进工程表
+
+        Returns:
+            {'total', 'drafts', 'published',
+             'types': {创作域: {'drafts', 'published'}},
+             'projects': [{type, project, drafts, published, words, updated_at_str}] 按域/工程排序,
+             'items': 最近 10 篇明细 {type, project, status, file, words, updated_at_str}}
         """
-        result = {
-            'total': 0, 'drafts': 0, 'published': 0,
-            'platforms': {}, 'items': [],
-        }
+        result = {'total': 0, 'drafts': 0, 'published': 0,
+                  'types': {}, 'projects': [], 'items': []}
         if not os.path.isdir(self.assets_base):
             return result
 
         items = []
-        for platform in sorted(os.listdir(self.assets_base)):
-            pdir = os.path.join(self.assets_base, platform)
-            if not os.path.isdir(pdir) or platform.startswith('.'):
-                continue
-            entry = {'drafts': 0, 'published': 0}
-            for cur, _dirs, files in os.walk(pdir):
-                parts = os.path.relpath(cur, pdir).replace('\\', '/').split('/')
-                if parts[-1] not in ASSET_STATUSES:
-                    continue
-                names = [f for f in files
-                         if not f.startswith('.') and not f.endswith('.meta.json')]
-                entry[parts[-1]] += len(names)
-                for f in names:
-                    fp = os.path.join(cur, f)
-                    items.append({
-                        'platform': platform,
-                        'space': parts[0] if len(parts) == 2 else None,
-                        'status': parts[-1],
-                        'file': f,
-                        'updated_at_str': datetime.fromtimestamp(
-                            os.path.getmtime(fp)).strftime('%Y-%m-%d %H:%M'),
-                        '_mtime': os.path.getmtime(fp),
-                    })
-            result['platforms'][platform] = entry
-            result['drafts'] += entry['drafts']
-            result['published'] += entry['published']
+        projects = {}  # (创作域, 工程) → 聚合行
 
+        def scan_dir(type_, project, status_dir):
+            st = os.path.basename(os.path.normpath(status_dir))
+            for name in sorted(os.listdir(status_dir)):
+                if name.startswith('.'):
+                    continue
+                path = os.path.join(status_dir, name)
+                if os.path.isdir(path):
+                    main, words, mtime = self._workspace_stats(path)
+                    if not mtime:
+                        continue  # 无任何内容文件（仅 .gitkeep 等隐藏文件）不计
+                    file = f'{name}/{main}' if main else f'{name}/'
+                elif name.endswith(META_SUFFIX):
+                    continue
+                else:
+                    words = (self._text_size(path)
+                             if name.lower().endswith(ASSET_TEXT_EXTS) else 0)
+                    mtime = os.path.getmtime(path)
+                    file = name
+                items.append({
+                    'type': type_, 'project': project, 'status': st,
+                    'file': file, 'words': words, '_mtime': mtime,
+                    'updated_at_str': datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M'),
+                })
+                tstat = result['types'].setdefault(
+                    type_, {'drafts': 0, 'published': 0})
+                tstat[st] += 1
+                if project:
+                    row = projects.setdefault(
+                        (type_, project),
+                        {'type': type_, 'project': project, 'drafts': 0,
+                         'published': 0, 'words': 0, '_mtime': 0})
+                    row[st] += 1
+                    row['words'] += words
+                    row['_mtime'] = max(row['_mtime'], mtime)
+
+        for top in sorted(os.listdir(self.assets_base)):
+            tdir = os.path.join(self.assets_base, top)
+            if not os.path.isdir(tdir) or top.startswith('.'):
+                continue
+            type_ = LEGACY_TYPE_DIRS.get(top, top)
+            for name in sorted(os.listdir(tdir)):
+                if name in ASSET_STATUSES:  # 旧平铺：<平台>/<状态>/文件
+                    scan_dir(type_, None, os.path.join(tdir, name))
+                    continue
+                pdir = os.path.join(tdir, name)
+                if not os.path.isdir(pdir) or name.startswith('.'):
+                    continue
+                for st in ASSET_STATUSES:
+                    sdir = os.path.join(pdir, st)
+                    if os.path.isdir(sdir):
+                        scan_dir(type_, name, sdir)
+
+        result['drafts'] = sum(t['drafts'] for t in result['types'].values())
+        result['published'] = sum(t['published'] for t in result['types'].values())
         result['total'] = result['drafts'] + result['published']
+
+        rows = sorted(projects.values(), key=lambda r: (r['type'], r['project']))
+        for r in rows:
+            r['updated_at_str'] = (datetime.fromtimestamp(r.pop('_mtime'))
+                                   .strftime('%Y-%m-%d %H:%M') if r['_mtime'] else '-')
+        result['projects'] = rows
+
         items.sort(key=lambda x: -x['_mtime'])
         for it in items:
             it.pop('_mtime')
@@ -211,6 +261,30 @@ class ContentInventory:
         return {'feishu_published': feishu_published, 'records': records}
 
     # ===== 内部 =====
+
+    def _workspace_stats(self, folder):
+        """工作区文件夹 → (主文件名, 正文字数, 最新 mtime)；无内容文件返回 ('', 0, 0)"""
+        main, main_size, words, newest = '', -1, 0, 0
+        for cur, _dirs, files in os.walk(folder):
+            for f in files:
+                if f.startswith('.') or f.endswith(META_SUFFIX):
+                    continue
+                fp = os.path.join(cur, f)
+                try:
+                    mtime = os.path.getmtime(fp)
+                except OSError:
+                    continue
+                newest = max(newest, mtime)
+                if f.lower().endswith(ASSET_TEXT_EXTS):
+                    size = self._text_size(fp)
+                    words += size
+                    # 主文件取夹根下最大的 .md/.txt（如 article.md），只看一层
+                    if cur == folder and size > main_size:
+                        main, main_size = f, size
+        return main, words, int(newest)
+
+    def _text_size(self, path):
+        return len(self._read(path))
 
     def _make_pm(self):
         from .project_manager import ProjectManager

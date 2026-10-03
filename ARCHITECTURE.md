@@ -111,7 +111,7 @@ IMAGE_PROVIDER=ark   # 生图能力用谁
 - `asset_manager.py`：标签、关联、扫描章节目录
 - `task_manager.py`：pending → running → done/failed/skipped，重试与日志
 - `project_manager.py`：工作台项目模型（article/novel/video）+ 发布记录（running → success/failed），SQLite `system/storage/db/projects.db`
-- `inventory.py`：创作统计盘点——扫描 `assets/novels/`（书目按 `chapters/` 与 `novel/chapters/` 两代布局；无章节目录的子目录计为主题/文集）、发布资产 `assets/**/drafts|published`，汇总发布记录；带 mtime 签名缓存
+- `inventory.py`：创作统计盘点——扫描 `assets/novels/`（书目按 `chapters/` 与 `novel/chapters/` 两代布局；无章节目录的子目录计为主题/文集）、发布资产 `assets/` 按文件夹内容自动盘点（`<工程>/drafts|published` 下散文件与 `<篇名>/` 工作区各计 1 篇，兼容旧版平铺，并按创作域 × 工程聚合工程统计表），汇总发布记录；带 mtime 签名缓存
 - `storage.py`：路径快捷与幂等检查
 
 ### 4.4 video_toolkit.py

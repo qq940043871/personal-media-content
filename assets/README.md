@@ -38,7 +38,9 @@ python media-cli.py asset init
 - 同一篇发多平台：`--platform` 覆盖默认目标，各自归档一份。
 - 本目录**入库**（Markdown/正文/元数据）；mp4 等媒体原件被根 .gitignore 类型规则拦截。
 - `.gitkeep` 与 `.meta.json` 都不进资产清单；工程内的子文件夹（如技能线的 `<篇名>/`）
-  也不进清单（清单只收单文件资产）。
+  也不进清单（清单只收单文件资产）。工作台「创作统计」另按文件夹内容盘点：
+  `<篇名>/` 工作区计 1 篇草稿（字数取夹内 .md/.txt，主文件如 article.md），
+  并按 <创作域>/<工程> 聚合出工程统计表。
 - 小说章节批量发飞书走 `python -m publishing.novel_publisher`（幂等记录在
   `system/storage/db/feishu_published.json`），不占 drafts/published 状态区。
 - 旧版平台平铺布局（`wechat|douyin/<状态>/`、`feishu/<库>/<状态>/`）仍可识别、发布与归档
@@ -63,5 +65,6 @@ python -m publishing.feishu publish --asset assets/wikis/我的知识库/drafts/
 python -m publishing.douyin publish --asset assets/videos/douyin/drafts/v.mp4 --json
 ```
 
-创作统计（dashboard 首页 / `python media-cli.py status`）按本目录盘点：
-书目章节数/字数、主题/文集份数、发布资产 drafts/published 计数、发布记录。
+创作统计（dashboard 首页）按本目录文件夹内容自动盘点：
+书目章节数/字数、主题/文集份数、发布资产 drafts/published 计数（含 `<篇名>/` 工作区）、
+工程统计表（创作域 × 工程）、发布记录。

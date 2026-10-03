@@ -65,30 +65,71 @@ def test_scan_novels_two_layouts_and_skip_readme(fake_repo):
     assert novels['books'][0]['book'] == 'book_b'  # 按字数倒序
 
 
-def test_scan_assets_statuses_meta_and_space(fake_repo):
+def test_scan_assets_statuses_meta_and_project(fake_repo):
+    """资产盘点：新布局散文件 + <篇名>/ 工作区文件夹 + 旧平铺兼容 + 按工程聚合"""
     base, _ = fake_repo
     assets = base / 'assets'
-    wd = assets / 'wechat' / 'drafts'
+
+    # 新布局：articles/<工程>/drafts/ 下的散文件与技能线 <篇名>/ 工作区
+    wd = assets / 'articles' / '公众号' / 'drafts'
     wd.mkdir(parents=True)
-    (wd / 'a.md').write_text('x', encoding='utf-8')
-    (wd / 'b.md').write_text('y', encoding='utf-8')
-    (wd / 'a.md.meta.json').write_text('{}', encoding='utf-8')   # sidecar 不计
+    (wd / '单文件稿.md').write_text('x' * 10, encoding='utf-8')
+    ws = wd / '20260620-A2'
+    ws.mkdir()
+    (ws / 'article.md').write_text('正' * 100, encoding='utf-8')
+    (ws / 'article.yaml').write_text('title: x', encoding='utf-8')          # 非 md/txt 不计字数
+    (ws / 'imgs').mkdir()
+    (ws / 'imgs' / 'cover_prompt.md').write_text('c' * 5, encoding='utf-8')  # 夹内嵌套 md 计字数
+    yaml_only = wd / '20260624-A5'
+    yaml_only.mkdir()
+    (yaml_only / 'article.yaml').write_text('title: y', encoding='utf-8')   # 仅配置也算 1 篇工作区
+    empty = wd / '20260699-empty'
+    empty.mkdir()
+    (empty / '.gitkeep').write_text('', encoding='utf-8')                   # 仅隐藏文件不计
+
+    pd = assets / 'articles' / '公众号' / 'published'
+    pd.mkdir()
+    (pd / '已发.md').write_text('y' * 20, encoding='utf-8')
+    (pd / '已发.md.meta.json').write_text('{}', encoding='utf-8')           # sidecar 不计
+
+    # 旧平铺布局：wechat|douyin/<状态>/文件（无工程名）、feishu/<库>/<状态>/文件
+    (assets / 'wechat' / 'drafts').mkdir(parents=True)
+    (assets / 'wechat' / 'drafts' / 'a.md').write_text('w', encoding='utf-8')
     (assets / 'douyin' / 'published').mkdir(parents=True)
     (assets / 'douyin' / 'published' / 'v.mp4').write_text('v', encoding='utf-8')
     fd = assets / 'feishu' / '我的知识库' / 'drafts'
     fd.mkdir(parents=True)
-    (fd / 'c.md').write_text('z', encoding='utf-8')
+    (fd / 'c.md').write_text('z' * 30, encoding='utf-8')
 
     inv = ContentInventory(base_dir=str(base), storage_base=str(base / 'storage'),
                            assets_base=str(base / 'assets'))
     a = inv.scan_assets()
-    assert a['drafts'] == 3
-    assert a['published'] == 1
-    assert a['total'] == 4
-    assert a['platforms']['wechat'] == {'drafts': 2, 'published': 0}
-    feishu = [i for i in a['items'] if i['platform'] == 'feishu'][0]
-    assert feishu['space'] == '我的知识库'
-    assert feishu['status'] == 'drafts'
+    # 计数：公众号散文件1 + 工作区3 + wechat平铺1 = 5 篇草稿；已发 1 + douyin平铺 1 = 2
+    assert a['drafts'] == 5
+    assert a['published'] == 2
+    assert a['total'] == 7
+    # 创作域归并：旧平铺 wechat→articles、douyin→videos、feishu→wikis
+    assert a['types']['articles'] == {'drafts': 4, 'published': 1}
+    assert a['types']['videos'] == {'drafts': 0, 'published': 1}
+    assert a['types']['wikis'] == {'drafts': 1, 'published': 0}
+
+    # 工程聚合：有工程名的进表，公众号 = 散文件1 + 工作区2 草稿（空夹不计）/ 1 已发
+    proj = {(p['type'], p['project']): p for p in a['projects']}
+    gz = proj[('articles', '公众号')]
+    assert gz['drafts'] == 3 and gz['published'] == 1
+    assert gz['words'] == 10 + 105 + 20          # 散文件 + 工作区(100+5) + 已发
+    assert proj[('wikis', '我的知识库')]['drafts'] == 1
+    assert all(p['project'] is not None for p in a['projects'])  # 旧平铺（无工程名）不进工程表
+
+    # 明细：工作区以 <篇名>/<主文件> 呈现；旧平铺无工程名
+    files = [i['file'] for i in a['items']]
+    assert '20260620-A2/article.md' in files
+    assert '20260624-A5/' in files
+    assert all('20260699-empty' not in f for f in files)
+    feishu = [i for i in a['items'] if i['type'] == 'wikis'][0]
+    assert feishu['project'] == '我的知识库' and feishu['status'] == 'drafts'
+    wechat = [i for i in a['items'] if i['file'] == 'a.md'][0]
+    assert wechat['type'] == 'articles' and wechat['project'] is None
 
 
 def test_analyses_family_videos(fake_repo):
