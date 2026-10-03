@@ -36,7 +36,7 @@ def register(subparsers):
 
     p_va = pipeline_sub.add_parser(
         'video-article', help='教学视频→文章（抽帧/ASR/成文，四步断点续跑）')
-    p_va.add_argument('--input-dir', help='批量输入目录（默认 storage/videos_input）')
+    p_va.add_argument('--input-dir', help='批量输入目录（默认 system/storage/videos_input）')
     p_va.add_argument('--video', help='单个视频文件路径（与 --input-dir 二选一）')
     p_va.set_defaults(func=cmd_pipeline_video_article)
 

@@ -8,10 +8,10 @@
 - 小说：assets/novels/<书>/{chapters, novel/chapters} 下的 .txt/.md 正文
        （两代目录布局都认；README 等说明文件不计）
 - 主题/文集：assets/novels/<主题>/ 下的 .md（亲情视频脚本、写作指南等；不含章节目录的子目录）
-- 资产：assets/ 待发布资产库（wechat/douyin/feishu/novels × drafts/published，
-       不含 .meta.json 与隐藏文件；路径规则见 tools/asset_store.py）
-- 成片：storage/videos_output/<项目> 子目录（成片原件不入库，本机为准）
-- 发布：storage/db/feishu_published.json（小说批量发飞书幂等记录）
+- 资产：assets/ 待发布资产库（创作域 novels/articles/videos/wikis × drafts/published，
+       不含 .meta.json 与隐藏文件；路径规则见 publishing/asset_store.py）
+- 成片：system/storage/videos_output/<项目> 子目录（成片原件不入库，本机为准）
+- 发布：system/storage/db/feishu_published.json（小说批量发飞书幂等记录）
        + projects.db 发布记录（工作台/后续产线写入）
 
 使用方式：
@@ -110,7 +110,7 @@ class ContentInventory:
 
     def scan_assets(self):
         """
-        待发布资产库盘点（assets/，平台 × drafts/published）
+        待发布资产库盘点（assets/，创作域/工程 × drafts/published）
 
         feishu/novels 下隔一层知识库/书名文件夹，用 os.walk 按目录名识别状态层；
         .gitkeep、.meta.json 与隐藏文件不计。

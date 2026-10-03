@@ -105,9 +105,9 @@ metadata:
 
 ## 用户仅说「发布」且未明确路径时 ⛔
 
-在用户**未给出** `assets/wechat/drafts/…` 路径、仅说「发布文章」「帮我发一下」等时：
+在用户**未给出** `assets/articles/公众号/drafts/…` 路径、仅说「发布文章」「帮我发一下」等时：
 
-1. **确定本篇目录**：列出仓库下 **`assets/wechat/drafts/`** 中子目录；若**多篇**，请用户**指定一篇**或选「最新修改」的一篇再读该目录 **`article.yaml`**。**勿**在未确认目录时假定路径。
+1. **确定本篇目录**：列出仓库下 **`assets/articles/公众号/drafts/`** 中子目录；若**多篇**，请用户**指定一篇**或选「最新修改」的一篇再读该目录 **`article.yaml`**。**勿**在未确认目录时假定路径。
 2. 读取该目录 **`article.yaml`** 中的 **`publish_completed`**（YAML 布尔：`true` / `false`；**缺省按 `false` 处理**）。
 
 | `publish_completed` | 智能体对用户说明（可略作口语化，勿改含义） |
@@ -148,7 +148,7 @@ python {baseDir}/scripts/publish.py check-screening
 python {baseDir}/scripts/publish.py check-wechat-env
 python {baseDir}/scripts/publish.py accounts
 python {baseDir}/scripts/publish.py check
-python {baseDir}/scripts/publish.py --account 1 full assets/wechat/drafts/YYYYMMDD-标题slug/
+python {baseDir}/scripts/publish.py --account 1 full assets/articles/公众号/drafts/YYYYMMDD-标题slug/
 python {baseDir}/scripts/getdraft.py published-fields
 ```
 

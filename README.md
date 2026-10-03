@@ -2,9 +2,9 @@
 
 > 一站式 AI 内容生产：短视频 + 图文发布 + 长篇小说创作 + 书评分析  
 > 本仓库是「自媒体域」正本，2026-10 从个人工作台 `p000_0000_it` 三域分家而来（工作台保有 it/money 两域与《工作台手册》）  
-> 文档体系见 [docs/INDEX.md](docs/INDEX.md)
+> 架构与协作约定见根目录 [ARCHITECTURE.md](ARCHITECTURE.md) / [AGENTS.md](AGENTS.md)
 
-> **运行时目录说明**：`models/`、`storage/` 运行子目录、各业务线 `output/`、`videos/`、素材原件（mp4/模型缓存）等**不入库**，首次运行自动生成或需从本地磁盘同步（见 [.gitignore](.gitignore)）。下表标注「运行时」的目录在全新 clone 中不存在，属正常现象。
+> **运行时目录说明**：`system/models/`、`system/storage/` 运行子目录、各业务线 `output/`、`videos/`、素材原件（mp4/模型缓存）等**不入库**，首次运行自动生成或需从本地磁盘同步（见 [.gitignore](.gitignore)）。下表标注「运行时」的目录在全新 clone 中不存在，属正常现象。
 
 ## 快速开始
 
@@ -20,20 +20,19 @@ python media-cli.py status
 
 | 目录 | 角色 |
 |------|------|
-| `core/` | 对内能力层：配置、providers（模型注册表）、内容转化、素材、任务、项目、盘点 |
-| `tools/` | 对外动作层：发布工具（飞书/公众号/抖音/小说批量），skill 化预备（见 tools/README.md） |
-| `assets/` | 待发布资产库：平台 × drafts/published 状态流转（tools 的数据契约，见 assets/README.md） |
-| `cli/` | 命令实现包（`media-cli.py` 为薄入口） |
-| `dashboard/` | Web 数据看板 + 项目工作台（Flask，默认仅绑 127.0.0.1；首页创作统计，`/workbench` 工作台） |
+| `core/` | 对内能力层：配置、providers（模型注册表）、内容转化、素材、任务、项目、盘点（三平面共用底座） |
+| `creation/` | 写平面·创作：AI agent 内容生产（`wechat_agent/` LangGraph 写作智能体）；技能包在 `.claude/skills/`（宿主约定路径） |
+| `publishing/` | 写平面·出海：发布工具（飞书/公众号/抖音/小说批量），skill 化预备（见 publishing/README.md） |
+| `cli/` | 命令实现包（`media-cli.py` 为薄入口；统一入口横跨三平面） |
+| `workbench/` | 读平面：Web 数据看板 + 项目工作台（Flask，默认仅绑 127.0.0.1；首页创作统计，`/workbench` 工作台） |
 | `media-cli.py` | 统一命令行入口 |
-| `tests/` | 平台层 pytest（`pip install -r requirements-dev.txt` 后运行） |
-| `models/` | 本地 ASR 等模型缓存（运行时生成，不入库） |
-| `storage/` | 统一素材/任务数据库与产物根目录（`db/` 为本地运行库，不入库，可由 asset scan 重建） |
-| `docs/` | 全仓文档索引与规范 |
-| `assets/` | **创作资产库**：`novels/`（每本小说/主题一个文件夹）、`douyin/`（短视频线）、`wechat/`、`feishu/`（发布资产 drafts/published 状态流转，见 [assets/README.md](assets/README.md)） |
+| `system/tests/` | 平台层 pytest（`pip install -r requirements-dev.txt` 后运行） |
+| `system/models/` | 本地 ASR 等模型缓存（运行时生成，不入库） |
+| `system/storage/` | 统一素材/任务数据库与产物根目录（`db/` 为本地运行库，不入库，可由 asset scan 重建） |
+| `assets/` | **创作资产库**：按作品建工程、按平台做动作——`novels/`（小说工程）、`articles/`（图文→公众号）、`videos/`（短视频→抖音）、`wikis/`（知识库→飞书），工程内 drafts→published 状态流转（见 [assets/README.md](assets/README.md)）；也是 publishing/ 的数据契约 |
 | `.claude/skills/` | 项目技能库：公众号官方文章技能线（15 个技能包，见其 README） |
 
-业务线内部统一采用 **process（过程）/ chapters·analyses（内容）/ docs（说明）/ assets·media（素材）** 分层，详见 [docs/DIRECTORY_STANDARD.md](docs/DIRECTORY_STANDARD.md)。
+业务线内部统一采用 **process（过程）/ chapters·analyses（内容）/ docs（说明）/ assets·media（素材）** 分层。
 
 ## 统一 CLI
 
@@ -67,12 +66,12 @@ python media-cli.py publish --title "标题" --video video.mp4 \
     --platforms douyin
 
 # 发布工具层（可独立运行，skill 化预备；资产发布成功自动归档）
-python -m tools.wechat publish --asset assets/wechat/drafts/x.md --json
-python -m tools.feishu publish --asset "assets/feishu/我的知识库/drafts/x.md" --json
-python -m tools.douyin publish --asset assets/douyin/drafts/v.mp4 --json
-python media-cli.py asset init                          # 建齐资产库骨架（平台×drafts/published）
-python media-cli.py asset ls --platform wechat          # 待发布资产清单
-python media-cli.py asset publish --file assets/wechat/drafts/x.md
+python -m publishing.wechat publish --asset assets/articles/公众号/drafts/x.md --json
+python -m publishing.feishu publish --asset "assets/wikis/我的知识库/drafts/x.md" --json
+python -m publishing.douyin publish --asset assets/videos/douyin/drafts/v.mp4 --json
+python media-cli.py asset init                          # 建齐资产库骨架（创作域×drafts/published）
+python media-cli.py asset ls --type articles            # 待发布资产清单
+python media-cli.py asset publish --file assets/articles/我的专栏/drafts/x.md
 python media-cli.py asset spaces                        # 飞书知识库映射
 
 # 小说转化（章节正文在各作品 chapters/ 下）
@@ -97,7 +96,7 @@ python media-cli.py dashboard start --port 5000
     ├─→ story_to_article → 深度解读/速读/人物 → 公众号 + 飞书
     └─→ novel_publisher  → 批量发布飞书知识库
 
-教学视频 (storage/videos_input，media-cli.py pipeline video-article)
+教学视频 (system/storage/videos_input，media-cli.py pipeline video-article)
     └─→ 抽帧+抽音+ASR → 结构化文章 → 飞书
 
 网文分析 → 已迁出至 personal-read-book 仓库（analyses/），本仓不再产出
@@ -110,7 +109,7 @@ python media-cli.py dashboard start --port 5000
 | 创作资产库 | [assets/README.md](assets/README.md) | 小说书目（novels/）、短视频线（douyin/）、发布资产与状态流转 |
 | 视频→文章流水线 | `python media-cli.py pipeline video-article`（实现 [core/video_to_article.py](core/video_to_article.py)） | 教学视频抽帧/转写/成文 |
 | 公众号技能线 | [.claude/skills/README.md](.claude/skills/README.md) | 选题→写作→配图→审稿→发布（技能包） |
-| 公众号写作智能体 | [core/wechat_agent/CLAUDE.md](core/wechat_agent/CLAUDE.md) | LangGraph 智能体（`wechat compose`） |
+| 公众号写作智能体 | [creation/wechat_agent/CLAUDE.md](creation/wechat_agent/CLAUDE.md) | LangGraph 智能体（`wechat compose`） |
 
 ## 配置
 
@@ -144,6 +143,4 @@ IMAGE_PROVIDER=ark
 
 - [架构说明 ARCHITECTURE.md](ARCHITECTURE.md)
 - [Agent 导航 AGENTS.md](AGENTS.md)
-- [文档总索引 docs/INDEX.md](docs/INDEX.md)
-- [目录规范 docs/DIRECTORY_STANDARD.md](docs/DIRECTORY_STANDARD.md)
 - 《工作台手册》：位于上游工作台 `D:\ai_person\p000_0000_it\it\knowledge-base\pages\00_overview\工作台手册.md`（三域归属决策表、发布流程、Git 约定；跨仓文档，不在本仓库）

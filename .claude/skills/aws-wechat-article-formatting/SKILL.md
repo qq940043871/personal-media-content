@@ -93,10 +93,10 @@ metadata:
 
 ```bash
 # 不传 --theme：使用合并配置中的 default_format_preset，否则 default
-python {baseDir}/scripts/format.py assets/wechat/drafts/YYYYMMDD-slug/article.md -o assets/wechat/drafts/YYYYMMDD-slug/article.html
+python {baseDir}/scripts/format.py assets/articles/公众号/drafts/YYYYMMDD-slug/article.md -o assets/articles/公众号/drafts/YYYYMMDD-slug/article.html
 
 # 显式指定主题（覆盖配置）
-python {baseDir}/scripts/format.py assets/wechat/drafts/YYYYMMDD-slug/article.md --theme grace -o assets/wechat/drafts/YYYYMMDD-slug/article.html
+python {baseDir}/scripts/format.py assets/articles/公众号/drafts/YYYYMMDD-slug/article.md --theme grace -o assets/articles/公众号/drafts/YYYYMMDD-slug/article.html
 
 # 自定义主色 / 字号
 python {baseDir}/scripts/format.py article.md --theme modern --color "#A93226"

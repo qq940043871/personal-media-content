@@ -86,10 +86,10 @@ def cmd_asset_stats(args):
 
 def cmd_asset_ls(args):
     """待发布资产库清单（assets/）"""
-    from tools.asset_store import AssetStore
+    from publishing.asset_store import AssetStore
 
     store = AssetStore(root=args.root)
-    items = store.list(platform=args.platform, space=args.space, status=args.status)
+    items = store.list(type_=args.type_, project=args.project, status=args.status)
 
     if args.json:
         import json
@@ -105,23 +105,23 @@ def cmd_asset_ls(args):
         rel = it['path'].replace('\\', '/')
         meta = it.get('meta')
         extra = f" → {meta['url']}" if meta and meta.get('url') else ''
-        print(f"  [{it['status']:<9}] {it['platform']}"
-              + (f"/{it['space']}" if it.get('space') else '')
+        print(f"  [{it['status']:<9}] {it['type']}"
+              + (f"/{it['project']}" if it.get('project') else '')
               + f"  {rel}{extra}")
 
 
 def cmd_asset_put(args):
     """写入一个待发布资产（默认进 drafts）"""
     import json
-    from tools.asset_store import AssetStore
+    from publishing.asset_store import AssetStore
 
     content = args.content
     if args.content_file:
         with open(args.content_file, 'r', encoding='utf-8') as f:
             content = f.read()
 
-    r = AssetStore(root=args.root).put(args.platform, args.name, content=content,
-                                       src=args.src, space=args.space,
+    r = AssetStore(root=args.root).put(args.type_, args.name, content=content,
+                                       src=args.src, project=args.project,
                                        status=args.status)
     if args.json:
         print(json.dumps(r, ensure_ascii=False, indent=2))
@@ -135,7 +135,7 @@ def cmd_asset_put(args):
 def cmd_asset_publish(args):
     """发布一个 drafts 资产（成功自动归档到 published/ + meta.json）"""
     import json
-    from tools.asset_store import AssetStore, _publish_one
+    from publishing.asset_store import AssetStore, _publish_one
 
     r = _publish_one(AssetStore(root=args.root), args)
     if args.json:
@@ -152,7 +152,7 @@ def cmd_asset_publish(args):
 def cmd_asset_spaces(args):
     """列出飞书知识库映射（FEISHU_WIKI_SPACES）"""
     import json
-    from tools.asset_store import AssetStore
+    from publishing.asset_store import AssetStore
 
     spaces = AssetStore(root=args.root).spaces()
     if args.json:
@@ -167,7 +167,7 @@ def cmd_asset_spaces(args):
 def cmd_asset_init(args):
     """建齐资产库目录骨架（平台 × 草稿/已发布）"""
     import json
-    from tools.asset_store import AssetStore
+    from publishing.asset_store import AssetStore
 
     r = AssetStore(root=args.root).ensure_layout(gitkeep=not args.no_gitkeep)
     if args.json:
@@ -210,23 +210,24 @@ def register(subparsers):
     p_ast = asset_sub.add_parser('stats', help='素材统计')
     p_ast.set_defaults(func=cmd_asset_stats)
 
-    # ---- 待发布资产库（assets/，tools/ 的数据契约）----
+    # ---- 待发布资产库（assets/，publishing/ 的数据契约）----
     p_als = asset_sub.add_parser('ls', help='待发布资产清单（drafts/published）')
-    p_als.add_argument('--platform', choices=['wechat', 'douyin', 'feishu', 'novels'])
-    p_als.add_argument('--space', help='按知识库/书名过滤')
+    p_als.add_argument('--type', dest='type_', choices=['novels', 'articles', 'videos', 'wikis'],
+                       help='按创作域过滤')
+    p_als.add_argument('--project', help='按工程过滤（书名/专栏/系列/知识库）')
     p_als.add_argument('--status', choices=['drafts', 'published'])
     p_als.add_argument('--json', action='store_true', help='输出 JSON')
     p_als.add_argument('--root', help='资产库根目录（默认 <仓库>/assets）')
     p_als.set_defaults(func=cmd_asset_ls)
 
     p_aput = asset_sub.add_parser('put', help='写入待发布资产（默认 drafts）')
-    p_aput.add_argument('--platform', choices=['wechat', 'douyin', 'feishu', 'novels'],
-                        required=True)
+    p_aput.add_argument('--type', dest='type_',
+                        choices=['novels', 'articles', 'videos', 'wikis'], required=True)
+    p_aput.add_argument('--project', help='工程名（书名/专栏/系列/知识库；wikis 可省略）')
     p_aput.add_argument('--name', required=True, help='资产文件名')
     p_aput.add_argument('--content', help='文本内容')
     p_aput.add_argument('--content-file', help='从文件读取内容')
     p_aput.add_argument('--src', help='源文件路径（视频/图片拷贝）')
-    p_aput.add_argument('--space', help='二级文件夹（feishu 知识库名 / novels 书名）')
     p_aput.add_argument('--status', choices=['drafts', 'published'], default='drafts')
     p_aput.add_argument('--json', action='store_true', help='输出 JSON')
     p_aput.add_argument('--root', help='资产库根目录（默认 <仓库>/assets）')
@@ -235,8 +236,8 @@ def register(subparsers):
     p_apub = asset_sub.add_parser('publish', help='发布 drafts 资产（成功自动归档）')
     p_apub.add_argument('--file', required=True, help='资产文件路径')
     p_apub.add_argument('--platform', choices=['feishu', 'wechat', 'douyin'],
-                        help='目标平台（默认从路径推断）')
-    p_apub.add_argument('--space', help='飞书目标知识库名（默认从路径推断）')
+                        help='目标平台（默认按创作域推断，可覆盖）')
+    p_apub.add_argument('--space', help='飞书目标知识库名（wikis 默认取工程名）')
     p_apub.add_argument('--title', help='标题（默认取文件名）')
     p_apub.add_argument('--tags', nargs='*', help='抖音话题标签')
     p_apub.add_argument('--cover', help='公众号封面图路径')
@@ -249,7 +250,7 @@ def register(subparsers):
     p_asp.add_argument('--root', help='资产库根目录（默认 <仓库>/assets）')
     p_asp.set_defaults(func=cmd_asset_spaces)
 
-    p_ainit = asset_sub.add_parser('init', help='建齐资产库目录骨架（平台×草稿/已发布）')
+    p_ainit = asset_sub.add_parser('init', help='建齐资产库目录骨架（创作域×草稿/已发布）')
     p_ainit.add_argument('--no-gitkeep', action='store_true', help='不写 .gitkeep 占位文件')
     p_ainit.add_argument('--json', action='store_true', help='输出 JSON')
     p_ainit.add_argument('--root', help='资产库根目录（默认 <仓库>/assets）')

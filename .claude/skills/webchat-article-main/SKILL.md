@@ -123,12 +123,12 @@ if ((Test-Path -LiteralPath "config\.env") -and (Test-Path -LiteralPath "config\
 #### A. 新建一篇（默认）
 
 1. **定题**：确定文章标题，生成 slug
-2. **建目录**：创建 `assets/wechat/drafts/YYYYMMDD-标题slug/`
+2. **建目录**：创建 `assets/articles/公众号/drafts/YYYYMMDD-标题slug/`
 3. **初始化元数据**：创建 `article.yaml`（含 `publish_completed: false`）
 
 #### B. 我已有草稿
 
-- 用户给出路径 → 读取 `assets/wechat/drafts/…/article.yaml` → 判断是否继续
+- 用户给出路径 → 读取 `assets/articles/公众号/drafts/…/article.yaml` → 判断是否继续
 
 ### 4) 内容流水线（子 skill）
 

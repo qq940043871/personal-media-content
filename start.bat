@@ -52,7 +52,7 @@ echo   [4] 待发布清单    asset ls
 echo   [5] 发布资产      asset publish（输入资产路径）
 echo   [6] Web 数据看板  dashboard start（127.0.0.1:5000）
 echo   [7] 安装依赖      pip install -r requirements.txt
-echo   [8] 回归测试      pytest tests/
+echo   [8] 回归测试      pytest system/tests/
 echo   [9] 打开文档      README.md
 echo   [0] 退出
 echo.
@@ -126,7 +126,7 @@ goto :menu
 
 :tests
 echo.
-"%PY%" -m pytest tests/ -q
+"%PY%" -m pytest system/tests/ -q
 echo.
 pause
 goto :menu

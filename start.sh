@@ -53,7 +53,7 @@ while true; do
     echo "  [5] 发布资产      asset publish（输入资产路径）"
     echo "  [6] Web 数据看板  dashboard start（127.0.0.1:5000）"
     echo "  [7] 安装依赖      pip install -r requirements.txt"
-    echo "  [8] 回归测试      pytest tests/"
+    echo "  [8] 回归测试      pytest system/tests/"
     echo "  [9] 打开文档      README.md"
     echo "  [0] 退出"
     echo
@@ -69,7 +69,7 @@ while true; do
         7) "$PY" -m pip install -r requirements.txt
            read -r -p "顺带装测试依赖 pytest? [y/N] " DEV
            [ "${DEV:-}" = "y" ] && "$PY" -m pip install -r requirements-dev.txt ;;
-        8) "$PY" -m pytest tests/ -q ;;
+        8) "$PY" -m pytest system/tests/ -q ;;
         9) explorer.exe "$(cygpath -w "$ROOT/README.md" 2>/dev/null || echo "$ROOT/README.md")" 2>/dev/null \
            || echo "  文档: $ROOT/README.md" ;;
         0) exit 0 ;;

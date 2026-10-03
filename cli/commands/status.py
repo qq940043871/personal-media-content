@@ -14,7 +14,7 @@ def cmd_status(args):
     from core.storage import Storage
     from core.task_manager import TaskManager
     from core.asset_manager import AssetManager
-    from tools.publisher_base import MultiPlatformPublisher
+    from publishing.publisher_base import MultiPlatformPublisher
 
     storage = Storage()
     storage_stats = storage.stats()

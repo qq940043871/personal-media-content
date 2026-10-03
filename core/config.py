@@ -75,7 +75,7 @@ class Config:
     ASR_LOCAL_DEVICE = os.getenv('ASR_LOCAL_DEVICE', 'auto')
     ASR_LOCAL_COMPUTE_TYPE = os.getenv('ASR_LOCAL_COMPUTE_TYPE', 'auto')
     ASR_LOCAL_BEAM_SIZE = int(os.getenv('ASR_LOCAL_BEAM_SIZE', '5'))
-    ASR_LOCAL_DOWNLOAD_ROOT = os.path.join(BASE_DIR, os.getenv('ASR_LOCAL_DOWNLOAD_ROOT', 'models/asr'))
+    ASR_LOCAL_DOWNLOAD_ROOT = os.path.join(BASE_DIR, os.getenv('ASR_LOCAL_DOWNLOAD_ROOT', 'system/models/asr'))
 
     # ===== 视频处理配置（FFmpeg）=====
     FFMPEG_PATH = os.getenv('FFMPEG_PATH', 'ffmpeg')
@@ -88,7 +88,7 @@ class Config:
     # lark-cli 的 Node 脚本路径（Windows 默认安装位置）
     LARK_CLI_RUN_JS = os.getenv('LARK_CLI_RUN_JS',
         r'C:\Program Files\nodejs\node_modules\@larksuite\cli\scripts\run.js')
-    # 飞书知识库映射（资产库 assets/feishu/<名称>/ 按名称移入对应 space）
+    # 飞书知识库映射（资产库 assets/wikis/<名称>/ 按名称移入对应 space）
     # 格式：名称:space_id,名称2:space_id2；未配置的名称发布到云空间根目录
     FEISHU_WIKI_SPACES = os.getenv('FEISHU_WIKI_SPACES', '')
 
@@ -101,9 +101,9 @@ class Config:
     WECHAT_OPEN_COMMENT = os.getenv('WECHAT_OPEN_COMMENT', '0')
 
     # ===== 抖音配置（Playwright 自动化创作者后台；登录态为 Cookie 文件，不入库）=====
-    STORAGE_DOUYIN = os.path.join(BASE_DIR, os.getenv('STORAGE_DOUYIN', 'storage/douyin'))
+    STORAGE_DOUYIN = os.path.join(BASE_DIR, os.getenv('STORAGE_DOUYIN', 'system/storage/douyin'))
     DOUYIN_COOKIES_FILE = os.path.join(
-        BASE_DIR, os.getenv('DOUYIN_COOKIES_FILE') or os.path.join('storage', 'douyin', 'cookies.json'))
+        BASE_DIR, os.getenv('DOUYIN_COOKIES_FILE') or os.path.join('system', 'storage', 'douyin', 'cookies.json'))
     DOUYIN_HEADLESS = os.getenv('DOUYIN_HEADLESS', 'false').lower() == 'true'
     DOUYIN_UPLOAD_TIMEOUT = int(os.getenv('DOUYIN_UPLOAD_TIMEOUT', '600'))
 
@@ -111,18 +111,18 @@ class Config:
     # 统一素材/产物根目录
     STORAGE_BASE = os.path.join(BASE_DIR, os.getenv('STORAGE_BASE', 'storage'))
 
-    # 待发布资产库（tools/ 的数据契约：drafts → 发布 → published）
+    # 待发布资产库（publishing/ 的数据契约：drafts → 发布 → published）
     ASSETS_BASE = os.path.join(BASE_DIR, os.getenv('ASSETS_BASE', 'assets'))
 
     # 视频相关
-    STORAGE_VIDEO_INPUT = os.path.join(BASE_DIR, os.getenv('STORAGE_VIDEO_INPUT', 'storage/videos_input'))
-    STORAGE_VIDEO_OUTPUT = os.path.join(BASE_DIR, os.getenv('STORAGE_VIDEO_OUTPUT', 'storage/videos_output'))
+    STORAGE_VIDEO_INPUT = os.path.join(BASE_DIR, os.getenv('STORAGE_VIDEO_INPUT', 'system/storage/videos_input'))
+    STORAGE_VIDEO_OUTPUT = os.path.join(BASE_DIR, os.getenv('STORAGE_VIDEO_OUTPUT', 'system/storage/videos_output'))
 
     # 文章相关
-    STORAGE_ARTICLES = os.path.join(BASE_DIR, os.getenv('STORAGE_ARTICLES', 'storage/articles'))
+    STORAGE_ARTICLES = os.path.join(BASE_DIR, os.getenv('STORAGE_ARTICLES', 'system/storage/articles'))
 
     # 小说相关
-    STORAGE_NOVELS = os.path.join(BASE_DIR, os.getenv('STORAGE_NOVELS', 'storage/novels'))
+    STORAGE_NOVELS = os.path.join(BASE_DIR, os.getenv('STORAGE_NOVELS', 'system/storage/novels'))
 
     @classmethod
     def ensure_base_directories(cls):

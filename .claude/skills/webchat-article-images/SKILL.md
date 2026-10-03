@@ -93,7 +93,7 @@ python {baseDir}/scripts/generate_images.py batch article.md -o imgs/
 
 ### 第2步：读取文章
 
-读取 `assets/wechat/drafts/YYYYMMDD-标题slug/article.md` 获取文章内容和配图标记。
+读取 `assets/articles/公众号/drafts/YYYYMMDD-标题slug/article.md` 获取文章内容和配图标记。
 
 ### 第3步：分析配图需求
 
@@ -117,7 +117,7 @@ result = generate_image_from_markdown(article_content)
 
 ### 第6步：保存
 
-保存到 `assets/wechat/drafts/YYYYMMDD-标题slug/imgs/`。
+保存到 `assets/articles/公众号/drafts/YYYYMMDD-标题slug/imgs/`。
 
 ### 第7步：更新引用
 

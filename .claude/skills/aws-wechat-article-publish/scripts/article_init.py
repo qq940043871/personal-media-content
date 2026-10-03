@@ -3,7 +3,7 @@
 文章元数据初始化工具（发布子 skill）
 
 在流程中的位置：
-- **本篇准备**（总览 main）：建好 `assets/wechat/drafts/…` 目录后，可初始化本篇 **`article.yaml`**（标题/作者/摘要等）。
+- **本篇准备**（总览 main）：建好 `assets/articles/公众号/drafts/…` 目录后，可初始化本篇 **`article.yaml`**（标题/作者/摘要等）。
 - **发布前**：定稿后再次更新 **`article.yaml`**（与 **`publish.py`** 读取的字段一致）。
 
 不属于七步箭头里的单独一格：元数据贯穿 **写稿 → … → 发布**，脚本主要在 **「建目录之后、写稿前后」** 与 **「发布前」** 使用。
@@ -195,7 +195,7 @@ def main():
         description="初始化或更新某一篇文章的元数据与文末链接",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("article_dir", help="文章目录（如 assets/wechat/drafts/20260326-标题slug）")
+    parser.add_argument("article_dir", help="文章目录（如 assets/articles/公众号/drafts/20260326-标题slug）")
     parser.add_argument("--title", help="文章标题")
     parser.add_argument("--author", help="作者名")
     parser.add_argument("--digest", help="摘要（80-128字建议）")

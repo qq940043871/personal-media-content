@@ -2,7 +2,7 @@
 
 > 本文是 [ai-flavor-check.md](ai-flavor-check.md) 的**校准锚点**:用仓库内两篇真实 `draft.md` 跑出的诊断结果，给「该报什么、该放过什么」立一把标尺。诊断风格漂移时（报得太狠或太松），回头对照这两个样例校准。**这里的判级同主文档:命中默认 🟡，不 blocking。**
 
-## 样例 A · `assets/wechat/drafts/20260404-gongzhonghao-skill-tuiguang/draft.md`
+## 样例 A · `assets/articles/公众号/drafts/20260404-gongzhonghao-skill-tuiguang/draft.md`
 
 **体裁**:公众号长文 / 干货（标准最严）。
 
@@ -25,7 +25,7 @@
 
 **总评折算**:🔴 0 / 🟡 2 / 🟢 余项 → 不阻断定稿。
 
-## 样例 B · `assets/wechat/drafts/20260404-cong-anzhuang-dao-caogaoxiang/draft.md`
+## 样例 B · `assets/articles/公众号/drafts/20260404-cong-anzhuang-dao-caogaoxiang/draft.md`
 
 **体裁**:公众号长文 / 干货（标准最严）。
 

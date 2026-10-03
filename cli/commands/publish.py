@@ -5,7 +5,7 @@ import sys
 
 def cmd_feishu_publish(args):
     """发布到飞书"""
-    from tools.feishu_publisher import FeishuPublisher
+    from publishing.feishu_publisher import FeishuPublisher
 
     pub = FeishuPublisher()
 
@@ -39,7 +39,7 @@ def cmd_feishu_publish(args):
 
 def cmd_wechat_publish(args):
     """发布到微信公众号草稿箱"""
-    from tools.wechat_publisher import WechatPublisher
+    from publishing.wechat_publisher import WechatPublisher
     from core.config import config
 
     pub = WechatPublisher()
@@ -92,7 +92,7 @@ def cmd_wechat_publish(args):
 
 def cmd_wechat_upload_image(args):
     """上传图片到微信（永久素材/正文图片）"""
-    from tools.wechat_publisher import WechatPublisher
+    from publishing.wechat_publisher import WechatPublisher
 
     pub = WechatPublisher()
 
@@ -117,7 +117,7 @@ def cmd_wechat_upload_image(args):
 
 def cmd_wechat_drafts(args):
     """查看草稿列表/数量"""
-    from tools.wechat_publisher import WechatPublisher
+    from publishing.wechat_publisher import WechatPublisher
 
     pub = WechatPublisher()
 
@@ -140,9 +140,10 @@ def cmd_wechat_drafts(args):
                 articles = content.get('news_item', [])
                 if articles:
                     title = articles[0].get('title', '(无标题)')
-                    print(f"  {i}. {title}  [media_id: {media_id[:20]}...]")
+                    # 前 20 位是微信 media_id 的公共前缀，截到 24 位才可区分
+                    print(f"  {i}. {title}  [media_id: {media_id[:24]}...]")
                 else:
-                    print(f"  {i}. media_id: {media_id[:20]}...")
+                    print(f"  {i}. media_id: {media_id[:24]}...")
         else:
             print(f"❌ 获取失败: {result.get('error')}")
             sys.exit(1)
@@ -150,7 +151,7 @@ def cmd_wechat_drafts(args):
 
 def cmd_wechat_publish_draft(args):
     """发布草稿"""
-    from tools.wechat_publisher import WechatPublisher
+    from publishing.wechat_publisher import WechatPublisher
 
     pub = WechatPublisher()
     result = pub.publish(args.media_id)
@@ -166,7 +167,7 @@ def cmd_wechat_publish_draft(args):
 
 def cmd_wechat_publish_status(args):
     """查询发布状态"""
-    from tools.wechat_publisher import WechatPublisher
+    from publishing.wechat_publisher import WechatPublisher
 
     pub = WechatPublisher()
     result = pub.get_publish_status(args.publish_id)
@@ -192,7 +193,7 @@ def cmd_wechat_publish_status(args):
 
 def cmd_douyin_login(args):
     """扫码登录抖音创作者平台，保存登录态 Cookie"""
-    from tools.douyin_publisher import DouyinPublisher
+    from publishing.douyin_publisher import DouyinPublisher
 
     result = DouyinPublisher().login(timeout=args.timeout)
     if result.success:
@@ -204,7 +205,7 @@ def cmd_douyin_login(args):
 
 def cmd_douyin_publish(args):
     """上传视频到抖音"""
-    from tools.douyin_publisher import DouyinPublisher
+    from publishing.douyin_publisher import DouyinPublisher
 
     pub = DouyinPublisher()
     result = pub.publish_markdown(args.title, '', options={
@@ -223,7 +224,7 @@ def cmd_douyin_publish(args):
 
 def cmd_douyin_check(args):
     """检查抖音登录态是否有效"""
-    from tools.douyin_publisher import DouyinPublisher
+    from publishing.douyin_publisher import DouyinPublisher
 
     result = DouyinPublisher().health_check()
     if result.success:
@@ -236,7 +237,7 @@ def cmd_douyin_check(args):
 def cmd_wechat_compose(args):
     """AI 写作助手（LangGraph 智能体：选题→写作→配图→审稿→草稿箱）"""
     import sys
-    from core.wechat_agent.app import main as agent_main
+    from creation.wechat_agent.app import main as agent_main
 
     argv = ['wechat-agent']
     if args.topic:
@@ -251,7 +252,7 @@ def cmd_wechat_compose(args):
 
 def cmd_publish_all(args):
     """一键多平台发布"""
-    from tools.publisher_base import MultiPlatformPublisher
+    from publishing.publisher_base import MultiPlatformPublisher
 
     # 读取内容
     if args.content_file:

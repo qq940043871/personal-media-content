@@ -6,8 +6,8 @@
 - 强制“推荐用途：封面”只能有一个
 
 用法：
-  python user_image_prepare.py assets/wechat/drafts/20260402-slug
-  python user_image_prepare.py assets/wechat/drafts/20260402-slug --cover 02-taomi.png
+  python user_image_prepare.py assets/articles/公众号/drafts/20260402-slug
+  python user_image_prepare.py assets/articles/公众号/drafts/20260402-slug --cover 02-taomi.png
 """
 
 from __future__ import annotations
@@ -74,7 +74,7 @@ def _build_analysis_md(files: list[Path], cover_name: str | None) -> str:
 
 def main():
     parser = argparse.ArgumentParser(description="为用户上传图片生成 img_analysis.md 模板")
-    parser.add_argument("article_dir", help="本篇目录，例如 assets/wechat/drafts/20260402-slug")
+    parser.add_argument("article_dir", help="本篇目录，例如 assets/articles/公众号/drafts/20260402-slug")
     parser.add_argument("--cover", help="指定封面文件名（必须位于 imgs/）")
     parser.add_argument("--overwrite", action="store_true", help="覆盖已存在的 img_analysis.md")
     args = parser.parse_args()

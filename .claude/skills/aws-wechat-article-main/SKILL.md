@@ -130,12 +130,12 @@ python {baseDir}/scripts/validate_env.py
 | `.aws-article/config.yaml` | 仓库内 | **非密钥配置**：账号文风、模型 `provider`/`base_url`/`model`、微信槽位数与 `wechat_api_base`、各槽位展示名等（模板见 `references/config.example.yaml`） |
 | `references/env.example.yaml` | 仓库内示例 | **仅文档**：`aws.env` 键名说明 |
 | `references/config.example.yaml` | 仓库内示例 | **仅文档**：`config.yaml` 结构示例 |
-| `article.yaml` | **本篇目录** `assets/wechat/drafts/YYYYMMDD-标题slug/` | **发文元数据**（标题/作者/摘要/封面等）及状态字段：**`image_source`**（仅 `generated` / `user`；默认 `generated`，用户上传配图时改为 `user`）与 **`publish_completed`**（新建 **`false`**，发布闭环结束 **`true`**），与 **`config.yaml`** 分工 |
+| `article.yaml` | **本篇目录** `assets/articles/公众号/drafts/YYYYMMDD-标题slug/` | **发文元数据**（标题/作者/摘要/封面等）及状态字段：**`image_source`**（仅 `generated` / `user`；默认 `generated`，用户上传配图时改为 `user`）与 **`publish_completed`**（新建 **`false`**，发布闭环结束 **`true`**），与 **`config.yaml`** 分工 |
 
 ### 发布方式与时间线
 
 1. **账号与发布策略**：**文风、选题边界、`publish_method`（默认 **`draft`**）、微信槽位元数据**等均在 **`.aws-article/config.yaml`** 维护；**密钥**仅在 **`aws.env`**。
-2. **本篇准备**（须先完成交互顺序 **「2) 全局账号约束」**）：在 **定题与 slug** 之后新建 `assets/wechat/drafts/YYYYMMDD-标题slug/`，并**优先**创建 **`article.yaml`**（含 **`publish_completed: false`**、标题/作者/摘要等；通常为本目录内**首个**应落盘的文件），再进入内容流水线。
+2. **本篇准备**（须先完成交互顺序 **「2) 全局账号约束」**）：在 **定题与 slug** 之后新建 `assets/articles/公众号/drafts/YYYYMMDD-标题slug/`，并**优先**创建 **`article.yaml`**（含 **`publish_completed: false`**、标题/作者/摘要等；通常为本目录内**首个**应落盘的文件），再进入内容流水线。
 3. **执行原则（严格顺序）**：必须按下述流水线顺序依次执行，**不能跳过任何部分**；每到一步若缺少必要输入（目录、元数据、主题、用户选择、发布意图等），要**先及时询问用户并获得确认**，再进入下一步，除非用户指出基于某个历史任务继续创作，那么需要智能体根据中间产物判断从哪个阶段开始。
 4. **内容流水线**（子 skill 串行，详见下文 **「交互顺序」第 4 步** 与 **「流程」** 表）：**选题**（[topics](../aws-wechat-article-topics/SKILL.md)）→ **写稿**（[writing](../aws-wechat-article-writing/SKILL.md)）→ **审稿（内容审）**（[review](../aws-wechat-article-review/SKILL.md)）→ **排版**（[formatting](../aws-wechat-article-formatting/SKILL.md)）→ **配图**（[images](../aws-wechat-article-images/SKILL.md)）→ **审稿（终审）**（review）。**内容审**产出的 **`article.md` 定稿须满足 [review 第 5 步](../aws-wechat-article-review/SKILL.md)（文末 **`{embed:…}`**，⛔ BLOCKING）后再排版。全程以 **`.aws-article/config.yaml`** 为账号与文风约束；典型产物依次为 `topic-card.md` / `draft.md` → `article.md` → `article.html` 与 `imgs/` 等。
 5. **发布**（[publish](../aws-wechat-article-publish/SKILL.md)）：**`draft`** → **`full`** 仅**草稿箱**；**`published`** 或 **`full --publish`** → 再**提交发布**；**`none`** → **`full`** **立即跳过**、不调微信。前两档需微信凭证。
@@ -167,11 +167,11 @@ python {baseDir}/scripts/validate_env.py
 
 - **不得**从本篇或其它目录的 **`article.yaml`**、历史草稿、**`topic-card.md`**、对话记忆或仓库内任意文件**静默抄录、推断或「顺手补全」**后写入 **`article_category` / `target_reader` / `default_author`**。对 **`tone`** 等与账号画像强相关的全局项，要直接询问用户，**同样禁止**未询问就写盘。
 - **允许的做法**：向用户说明「当前为空」，**请用户填写或确认**；若你想根据某篇 `article.yaml` 给**建议**，只能**展示为待选文案**，并问「是否采用 / 要改哪几个字」，**用户明确同意后再写入** `config.yaml`。
-- **顺序**：在尚未完成 **「3) 本篇准备」** 中「续旧 / 新开」的确认前，**禁止**用某一 `assets/wechat/drafts/…/article.yaml` **反推**全局三键，避免误把单篇元数据当成整号定位。
+- **顺序**：在尚未完成 **「3) 本篇准备」** 中「续旧 / 新开」的确认前，**禁止**用某一 `assets/articles/公众号/drafts/…/article.yaml` **反推**全局三键，避免误把单篇元数据当成整号定位。
 
 ### 3) 本篇准备（二选一，默认「新建一篇」）
 
-**在完成「2) 全局账号约束」之后**，**在不了解用户是要续写既有草稿还是新开一篇时**（例如未指定 `assets/wechat/drafts/…` 路径、且仓库 **`assets/wechat/drafts/`** 下存在进行中目录或多个候选）：**须先询问**并让用户选定 **「继续哪一篇」** 或 **「新开一篇」**，**再**进入下列 A/B 或调用写作脚本。**禁止**默认「最近修改」目录、未确认就运行写作脚本、或假定沿用上一轮路径。
+**在完成「2) 全局账号约束」之后**，**在不了解用户是要续写既有草稿还是新开一篇时**（例如未指定 `assets/articles/公众号/drafts/…` 路径、且仓库 **`assets/articles/公众号/drafts/`** 下存在进行中目录或多个候选）：**须先询问**并让用户选定 **「继续哪一篇」** 或 **「新开一篇」**，**再**进入下列 A/B 或调用写作脚本。**禁止**默认「最近修改」目录、未确认就运行写作脚本、或假定沿用上一轮路径。
 
 **业务素材双向规则（涉及用户自身业务时强制，详见 [assets skill](../aws-wechat-article-assets/SKILL.md)）**：
 
@@ -184,7 +184,7 @@ python {baseDir}/scripts/validate_env.py
    - **禁止**在用户未回答本步（且当前对话也未等价说明）之前：**调用 web_search**、**执行 topics 的调研**、**批量生成选题或标题**。  
    - 用户已在当次对话中说清楚「写什么」的，可本步口头确认一句即可，不必重复盘问。
 2. **定题与 slug**：在写作意图已明确的前提下，确定**发文章标题**——用户从候选中选一个，或**自定义标题**；据此生成 **slug**，目录名为 `YYYYMMDD-标题slug`（slug 规则：小写、连字符、与项目习惯一致即可）。
-3. **建目录与 `article.yaml`**：创建 `{drafts_root}/YYYYMMDD-标题slug/`（`drafts_root` 以 **`config.yaml`** 为准，默认 `assets/wechat/drafts/`）。随即初始化本篇 **`article.yaml`**（含 **`publish_completed: false`**，及标题、作者、摘要等；目录内**宜最先写入**；可用 `{baseDir}/../aws-wechat-article-publish/scripts/article_init.py`）。
+3. **建目录与 `article.yaml`**：创建 `{drafts_root}/YYYYMMDD-标题slug/`（`drafts_root` 以 **`config.yaml`** 为准，默认 `assets/articles/公众号/drafts/`）。随即初始化本篇 **`article.yaml`**（含 **`publish_completed: false`**，及标题、作者、摘要等；目录内**宜最先写入**；可用 `{baseDir}/../aws-wechat-article-publish/scripts/article_init.py`）。
    - **`publish_method`**：默认 **`draft`**；要发出去 → **`published`** 或 **`full --publish`**；用户明确不填微信 → **`none`**。
 4. **本篇预设单选落盘（必做）**：初始化后按场景执行：**新建首轮**以 **`.aws-article/config.yaml`** 为来源，按 **`custom_* > default_*`** 结合本篇主题/选题卡，为以下字段各选**单一预设**并写回本篇 **`article.yaml`** 为**单元素列表**：`default_structure`、`default_closing_block`、`default_title_style`、`default_format_preset`、`default_cover_image_style`、`default_article_image_style`、`default_sticker_style`。**续写/重入**时若本篇 `article.yaml` 对应字段已为单元素列表，视为本篇已选并优先保留，不重选不覆盖。若 `config.yaml` 不存在或候选为空，可保持 `[]`。
 5. 至此才进入 **第 4 步内容流水线**。
@@ -221,7 +221,7 @@ python {baseDir}/scripts/validate_env.py
 
 当用户说「草稿箱里图不满意，换我上传的图重新发」：
 
-1. 锁定目标 `assets/wechat/drafts/…` 目录；
+1. 锁定目标 `assets/articles/公众号/drafts/…` 目录；
 2. 将新图放入本篇 `imgs/`，生成/更新 `img_analysis.md`（封面仅 1 张）；
    - 同步更新本篇 `article.yaml`：`image_source: user`；
    - 开始重做流程前，将 `publish_completed` 置回 `false`；

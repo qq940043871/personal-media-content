@@ -42,7 +42,7 @@ python {baseDir}/scripts/run_agent.py simple "RAG 系统架构设计"
 - **凭证外发**：API key 发给火山方舟 LLM 和图像端点；微信凭证发给 `api.weixin.qq.com`
 - **内容外发**：文章内容发给 LLM；图片描述发给 SeeDream；正文/封面发给微信
 - **文件读**：`config/.env`、`config/settings.py`
-- **文件写**：`assets/wechat/drafts/YYYYMMDD-标题slug/` 下的 `outline.md`、`article.md`、`article.html`、`imgs/`
+- **文件写**：`assets/articles/公众号/drafts/YYYYMMDD-标题slug/` 下的 `outline.md`、`article.md`、`article.html`、`imgs/`
 
 ## 路由
 
@@ -163,4 +163,4 @@ LangGraph 自动执行 6 个节点，每个节点完成后状态更新到 `Artic
 
 | 读取 | 产出 |
 |------|------|
-| `config/.env`、`config/settings.py` | `assets/wechat/drafts/YYYYMMDD-标题slug/outline.md`、`article.md`、`article.html`、`imgs/` |
+| `config/.env`、`config/settings.py` | `assets/articles/公众号/drafts/YYYYMMDD-标题slug/outline.md`、`article.md`、`article.html`、`imgs/` |

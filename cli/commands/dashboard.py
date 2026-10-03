@@ -20,7 +20,7 @@ def cmd_dashboard_start(args):
         print("   ⚠️  当前绑定非本机地址，看板无鉴权，请确保网络环境可信")
     print("   按 Ctrl+C 停止\n")
 
-    from dashboard.app import create_app
+    from workbench.app import create_app
     app = create_app()
     app.run(host=host, port=args.port, debug=False)
 

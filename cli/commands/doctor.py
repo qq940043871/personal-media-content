@@ -128,22 +128,22 @@ def _collect_checks(live):
 
     # ---- 5.5 资产库骨架（assets/ 平台 × drafts/published）----
     try:
-        from tools.asset_store import AssetStore, DEFAULT_FEISHU_SPACE
+        from publishing.asset_store import AssetStore, DEFAULT_FEISHU_SPACE
         store = AssetStore()
-        expected = [(pf, None) for pf in ('wechat', 'douyin')]
-        for s in (store.spaces() or [{'name': DEFAULT_FEISHU_SPACE}]):
-            expected.append(('feishu', s['name']))
-        for book in store.books():
-            expected.append(('novels', book))
+        # 创作域骨架：articles/videos 域目录 + wikis 按知识库 + novels 按书目（各含 drafts/published）
+        spaces = store.spaces() or [{'name': DEFAULT_FEISHU_SPACE}]
+        books = store.books()
+        expected = ([(td, None, '') for td in ('articles', 'videos')]
+                    + [('wikis', s['name'], st) for s in spaces for st in ('drafts', 'published')]
+                    + [('novels', b, st) for b in books for st in ('drafts', 'published')])
 
         missing = []
-        for pf, space in expected:
-            for st in ('drafts', 'published'):
-                d = os.path.join(store.root, pf, *( [space] if space else [] ), st)
-                if not os.path.isdir(d):
-                    missing.append(os.path.relpath(d, store.root).replace('\\', '/'))
+        for td, space, st in expected:
+            d = os.path.join(store.root, td, *([space] if space else []), *([st] if st else []))
+            if not os.path.isdir(d):
+                missing.append(os.path.relpath(d, store.root).replace('\\', '/'))
         add('资产库骨架', not missing,
-            f"{len(expected) * 2} 个状态目录就绪（{store.root}）" if not missing else
+            f"{len(expected)} 个目录就绪（{store.root}）" if not missing else
             f"缺 {len(missing)} 个: {', '.join(missing[:4])}… 跑 media-cli.py asset init 补齐",
             warn_if_fail=True)
     except Exception as e:
@@ -160,7 +160,7 @@ def _collect_checks(live):
             add('LLM 探活', False, f"{type(e).__name__}: {str(e)[:200]}")
 
         try:
-            from tools.publisher_base import MultiPlatformPublisher
+            from publishing.publisher_base import MultiPlatformPublisher
             mp = MultiPlatformPublisher()
             for pid, err in mp.init_errors.items():
                 # 未配置的可选平台（如微信凭据缺失、抖音未扫码）降级为 WARN

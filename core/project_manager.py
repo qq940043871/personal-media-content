@@ -17,7 +17,7 @@
     rid = pm.start_publish(project['id'], 'feishu', title='秋日书评')
     pm.finish_publish(rid, 'success', url='https://...')
 
-数据落在 storage/db/projects.db（不入库）。
+数据落在 system/storage/db/projects.db（不入库）。
 """
 
 import os

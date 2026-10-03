@@ -57,7 +57,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **每个步骤** → 生成独立的 `.txt` 文件（不用 markdown/html）
 - **文件命名** → `序号-步骤名称.txt`（过程）/ `8-续写-第{X}章.txt`（正文）
 - **上下文传递** → 每步输出作为下一步输入
-- 详见 [README.md](README.md)；全仓规范见 `docs/DIRECTORY_STANDARD.md`
+- 详见 [README.md](README.md)；全仓地图见根 `README.md` / `AGENTS.md`
 
 ## Available Skills
 

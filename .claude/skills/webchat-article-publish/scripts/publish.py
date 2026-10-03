@@ -40,8 +40,9 @@ def cmd_draft(args):
     # 读取 Markdown
     md_file = args.md
     if not os.path.isfile(md_file):
-        # 尝试在 assets/wechat/drafts/ 下找
-        candidate = PROJECT_DIR / "drafts" / md_file / "article.md"
+        # 尝试在 assets/articles/公众号/drafts/ 下找
+        candidate = (PROJECT_DIR / "assets" / "articles" / "公众号"
+                     / "drafts" / md_file / "article.md")
         if candidate.exists():
             md_file = str(candidate)
         else:
@@ -121,7 +122,7 @@ def main():
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_draft = sub.add_parser("draft", help="发布到草稿箱")
-    p_draft.add_argument("md", help="Markdown 文件路径或 assets/wechat/drafts/ 下的目录名")
+    p_draft.add_argument("md", help="Markdown 文件路径或 assets/articles/公众号/drafts/ 下的目录名")
     p_draft.add_argument("--title", help="文章标题（默认从目录名推断）")
     p_draft.add_argument("--author", default="AI技术专栏", help="作者名")
 

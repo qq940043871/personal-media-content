@@ -14,9 +14,7 @@
 ## 先读什么
 
 1. [README.md](README.md) — 全仓地图与 CLI
-2. [docs/INDEX.md](docs/INDEX.md) — 文档总索引
-3. [docs/DIRECTORY_STANDARD.md](docs/DIRECTORY_STANDARD.md) — 目录分层约定（含平台层结构）
-4. [ARCHITECTURE.md](ARCHITECTURE.md) — Provider 注册表 / 发布契约 / CLI 细节
+2. [ARCHITECTURE.md](ARCHITECTURE.md) — 平台架构：Provider 注册表 / 发布契约 / CLI 细节
 
 改某条业务线时，再读该线入口 README（见 README「业务线入口」表）。
 
@@ -26,30 +24,32 @@
 |--------|----------|-----------|-----------|------------|
 | `assets/novels/<书>` | `<书>/process/`、`review/` | `<书>/chapters/`（time_rift 为 `novel/chapters/`） | `CLAUDE.md`、`.claude/` | `source/`、`scripts/`、`meta/` |
 | `assets/novels/<主题>` | — | `<主题>/短视频脚本.md`、`视频分镜脚本.md` | — | 亲情视频主题与 guides 文集 |
-| `assets/douyin` | `docs/` | — | `README.md` | `media/`（成片原件不入库）；`assets/` 运行时生成 |
-| `.claude/skills/`（公众号技能线） | — | `assets/wechat/drafts/<篇名>/` | 各技能 `SKILL.md` | `aws.env`、`.aws-article/` 在仓库根（不入库） |
+| `assets/<类型>/<工程>` | `drafts/` | `published/`（+meta.json） | assets/README.md | 类型 = novels/articles/videos/wikis |
+| `assets/videos/douyin` | `docs/`、`scripts/` | — | `README.md` | `media/`（成片原件不入库）；`assets/` 运行时生成 |
+| `.claude/skills/`（公众号技能线） | — | `assets/articles/公众号/drafts/<篇名>/` | 各技能 `SKILL.md` | `aws.env`、`.aws-article/` 在仓库根（不入库） |
 
 > 书评分析线（hello_weixin_book）已于 2026-10 整体迁出至上游 `personal-read-book` 仓库，本仓不再维护。
 
-平台层代码与数据：
+平台层代码与数据（概念分层：**读平面看板 / 写平面创作与发布 / 共用能力底座与数据**）：
 
-- 能力：`core/`（对内能力层，被 import 的库：模型接入在 `core/providers/`、转化/存储/任务/项目/盘点）
-- 工具：`tools/`（对外动作层：发布契约在 `tools/publisher_base.py`，三个平台发布器 + 小说批量发布 + 资产库 `asset_store.py`；skill 化契约见 tools/README.md）
-- 资产库：`assets/`（平台 × drafts/published 状态流转；发布成功自动归档 + meta.json；结构见 assets/README.md）
-- 命令：`cli/commands/`（`media-cli.py` 只是薄入口）
-- 看板与工作台：`dashboard/`（模板在 `dashboard/templates/`；默认仅绑 127.0.0.1；首页为创作统计 `/api/inventory` 盘点小说/资产/稿件，`/workbench` 项目工作台，项目数据在 `storage/db/projects.db`）
+- 能力：`core/`（对内能力层，被 import 的库：模型接入在 `core/providers/`、转化/存储/任务/项目/盘点——三平面共用底座）
+- 创作：`creation/`（写平面·AI agent 内容生产：`creation/wechat_agent` 写作智能体；技能包在 `.claude/skills/`——物理位置受 Agent 宿主约定固定，逻辑上属创作平面）
+- 发布：`publishing/`（写平面·出海：发布契约在 `publishing/publisher_base.py`，三个平台发布器 + 小说批量发布 + 资产库 `asset_store.py`；skill 化契约见 publishing/README.md）
+- 资产库：`assets/`（创作域/工程 × drafts/published 状态流转；发布成功自动归档 + meta.json；结构见 assets/README.md）
+- 命令：`cli/commands/`（`media-cli.py` 只是薄入口；统一入口横跨三平面，不按概念拆）
+- 看板与工作台：`workbench/`（读平面：模板在 `workbench/templates/`；默认仅绑 127.0.0.1；首页为创作统计 `/api/inventory` 盘点小说/资产/稿件，`/workbench` 项目工作台，项目数据在 `system/storage/db/projects.db`）
 - 启动器：`start.bat`（Windows 双击出菜单）/ `start.sh`（Git Bash）；带参数时原样透传给 `media-cli.py`；两者都会自动挑「能 import dotenv」的解释器（本机 `python` 指向缺依赖的托管版，实际依赖在 anaconda）
-- 单测：`tests/`（平台层 pytest，依赖 `requirements-dev.txt`）
-- 统一存储/DB：`storage/`（由 `.env` 的 `STORAGE_*` 配置，默认 `storage/`；`db/` 与运行子目录不入库）
-- 模型缓存：`models/`（运行时生成，不入库）
+- 单测：`system/tests/`（平台层 pytest，依赖 `requirements-dev.txt`）
+- 统一存储/DB：`system/storage/`（由 `.env` 的 `STORAGE_*` 配置，默认 `system/storage/`；`db/` 与运行子目录不入库）
+- 模型缓存：`system/models/`（运行时生成，不入库）
 
 ## 写作与修改规则
 
 - 中文技术文档：定位 → 目录地图 → 常用命令/流程 → 文档索引 → 状态与已知问题。
-- 更新结构时同步改：根 `README.md`、`docs/INDEX.md`、对应业务线 README。
+- 更新结构时同步改：根 `README.md`、`ARCHITECTURE.md`、对应业务线 README。
 - 文档中「运行时生成」的目录不手工创建、不提交；新的大文件类型（视频/模型/压缩包）先补 `.gitignore` 规则。
 - 小说正文路径已重排为 `assets/novels/<book>/chapters/`；旧文档中的 `8-正文/`、仓库根平铺 `8-续写-*.txt` 均已过时。
-- 遗留脚本（写死分家前路径，如 `cangyuantu/scripts/*.sh`、`docs/_archive/` 下归档脚本）文件头已有退役横幅，勿直接运行。
+- 遗留脚本（写死分家前路径，如 `cangyuantu/scripts/*.sh`）文件头已有退役横幅，勿直接运行。
 - 不要把密钥写进文档；模型凭据统一走根 `.env` 的 `PROVIDER_*` 注册表，官方号技能线走其 `aws.env`（均不入库）。
 
 ## 扩展清单（改架构时照此走）
@@ -59,11 +59,11 @@
 2. 能力指向：`LLM_PROVIDER / ASR_PROVIDER / IMAGE_PROVIDER = <ID>`
 3. 验证：`python media-cli.py doctor --live`
 
-**新增发布平台**：实现 `tools/publisher_base.BasePublisher`（`publish_markdown` + 建议 `health_check`/`check_config`）→ 在 `tools/publisher_base._load_publisher` 登记 → `doctor` 自动纳入体检；资产文件夹约定加入 `tools/asset_store.PLATFORM_DIRS`（完整步骤见 tools/README.md）。
+**新增发布平台**：实现 `publishing/publisher_base.BasePublisher`（`publish_markdown` + 建议 `health_check`/`check_config`）→ 在 `publishing/publisher_base._load_publisher` 登记 → `doctor` 自动纳入体检；创作域与默认平台约定见 `publishing/asset_store.ASSET_TYPES` / `TYPE_PLATFORM`（完整步骤见 publishing/README.md）。
 
 **新增 CLI 命令**：在 `cli/commands/` 对应域模块加 `cmd_*` 与 `register()`；命令帮助同步 `cli/app.py` epilog 与 README。
 
-**新增能力/技能**：能力进 `core/`（库）或 `tools/`（可运行工具，按其接口契约）；技能包放 `.claude/skills/`；内容资产进 `assets/`。若确需新业务线目录才登记 `cli/commands/status.py` 的 `BUSINESS_LINES`；文档同步根 README、`docs/INDEX.md`、`ARCHITECTURE.md`、本文件。
+**新增能力/技能**：能力进 `core/`（库）或 `publishing/`（可运行工具，按其接口契约）；技能包放 `.claude/skills/`；内容资产进 `assets/`。若确需新业务线目录才登记 `cli/commands/status.py` 的 `BUSINESS_LINES`；文档同步根 README、`ARCHITECTURE.md`、本文件。
 
 ## 常用命令
 
@@ -79,8 +79,8 @@ python media-cli.py asset scan novel --project 沧元图 \
   --dir ./assets/novels/cangyuantu/chapters/
 python media-cli.py asset init               # 建齐资产库骨架（wechat/douyin 各一个、feishu 按知识库、novels 按书名）
 python media-cli.py asset ls --json          # 待发布资产库清单
-python media-cli.py asset publish --file assets/wechat/drafts/x.md   # 发布并自动归档
-python -m pytest tests/                    # 平台层回归
+python media-cli.py asset publish --file assets/articles/我的专栏/drafts/x.md   # 发布并自动归档
+python -m pytest system/tests/                    # 平台层回归
 ```
 
 ## 状态快照（2026-10 梳理）
@@ -90,4 +90,4 @@ python -m pytest tests/                    # 平台层回归
 - `cangyuantu` 沧元图续写：300 章正文在 `chapters/`
 - `diff_life` 平凡人生：300 章正文在 `chapters/`
 - `little_man` 普通人的一生：完整版 + 分章
-- 已知外部依赖项：飞书发布需 `lark-cli auth login` 的 user 授权；公众号 API 需在后台把出口 IP 加入白名单；抖音发布为 Playwright 自动化（`pip install playwright && playwright install chromium` + `media-cli.py douyin login` 扫码，登录态 Cookie 在 `storage/douyin/` 不入库，发布时默认弹出浏览器窗口）（`doctor` 会给出精确指引）
+- 已知外部依赖项：飞书发布需 `lark-cli auth login` 的 user 授权；公众号 API 需在后台把出口 IP 加入白名单；抖音发布为 Playwright 自动化（`pip install playwright && playwright install chromium` + `media-cli.py douyin login` 扫码，登录态 Cookie 在 `system/storage/douyin/` 不入库，发布时默认弹出浏览器窗口）（`doctor` 会给出精确指引）

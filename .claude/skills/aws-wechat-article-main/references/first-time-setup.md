@@ -106,10 +106,10 @@ python skills/aws-wechat-article-main/scripts/validate_env.py --agent-writing-ap
 
 **⛔ 配置与写稿分两阶段（必须遵守）**
 
-- **`validate_env.py` 退出码 1** 时：**本轮只谈环境配置**——按当前失败分支展示 **环境检查结果 + 三条 + 额外操作** 即可，**结束在该主题**；**禁止**在同一条回复（或同一轮未闭环配置前）里再接：写哪篇文章、是否继续某篇草稿、`assets/wechat/drafts/` 路径、选题、定题、`topic-card`、审稿、排版等**任何写稿向流程**。
+- **`validate_env.py` 退出码 1** 时：**本轮只谈环境配置**——按当前失败分支展示 **环境检查结果 + 三条 + 额外操作** 即可，**结束在该主题**；**禁止**在同一条回复（或同一轮未闭环配置前）里再接：写哪篇文章、是否继续某篇草稿、`assets/articles/公众号/drafts/` 路径、选题、定题、`topic-card`、审稿、排版等**任何写稿向流程**。
 - **`validate_env.py` 退出码 0（含模型警告）** 时：流程**不阻断**，可直接进入下一阶段。模型警告仅在用户已明确同意并传入对应参数时出现。
 - **下一阶段**：用户按上文配置引导完成落盘并重跑校验至 **退出码 0**，或明确声明「不配置微信，按本次例外由智能体继续」并按总览 [SKILL.md](../SKILL.md) 完成 **「本次例外」** 书面确认后，**从下一轮对话起**先完成总览 **「2) 全局账号约束」**，再进入 **「3) 本篇准备」**、写稿等。
-  - **在不了解用户是要续写旧稿还是新开一篇时**（含刚闭环配置后接写稿）：须按总览 **「3) 本篇准备」** 开头规则**先问再动**，**禁止**直接假定某一 `assets/wechat/drafts/…` 目录并调用写作脚本。
+  - **在不了解用户是要续写旧稿还是新开一篇时**（含刚闭环配置后接写稿）：须按总览 **「3) 本篇准备」** 开头规则**先问再动**，**禁止**直接假定某一 `assets/articles/公众号/drafts/…` 目录并调用写作脚本。
 
 ---
 
@@ -224,7 +224,7 @@ python skills/aws-wechat-article-main/scripts/validate_env.py
 
 ## 每次发文目录与顺序（摘要）
 
-- 目录：`assets/wechat/drafts/YYYYMMDD-标题slug/`（`drafts_root` 以 **`config.yaml`** 为准时从其读取，否则默认 `assets/wechat/drafts/`）。  
+- 目录：`assets/articles/公众号/drafts/YYYYMMDD-标题slug/`（`drafts_root` 以 **`config.yaml`** 为准时从其读取，否则默认 `assets/articles/公众号/drafts/`）。  
 - 建议内含：`draft.md`、`article.md`、`article.html`、`article.yaml`、`imgs/`、`out/` 等（按需生成）。  
 - 流程：定题 → 选题 → 写稿 → 审 → 排版 → 配图 → 终审 → **按需发布**：**`draft`** / **`published`** / **`none`** 见 schema；**`none`** 时 **`full`** 直接跳过；**`draft`/`published`** 须微信就绪（**`check-wechat-env`**）。  
 

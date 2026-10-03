@@ -136,7 +136,7 @@ metadata:
 
 当用户明确说「这篇文章配图不满意，换成我上传的新图并重新发草稿箱」时，按以下流程：
 
-1. 用户指定目标文章目录（`assets/wechat/drafts/YYYYMMDD-slug/`）。
+1. 用户指定目标文章目录（`assets/articles/公众号/drafts/YYYYMMDD-slug/`）。
 2. 将新图放入该目录 `imgs/`，并更新 `img_analysis.md`（仍需满足“封面仅 1 张”）。
    - 同步把本篇 `article.yaml.image_source` 更新为 `user`。
 3. 按 `img_analysis.md` 重新映射图片到 `article.md` 对应章节（允许重排章节以匹配图序）。
@@ -211,7 +211,7 @@ Prompt 构建：[references/image-styles/prompt-construction.md](references/imag
 **调用专用 API 时**（在**仓库根**执行，`{baseDir}` 按上表解析；路径按本篇 `imgs/` 调整）：
 
 ```bash
-python {baseDir}/scripts/image_create.py batch assets/wechat/drafts/YYYYMMDD-slug/imgs/prompts/ -o assets/wechat/drafts/YYYYMMDD-slug/imgs/
+python {baseDir}/scripts/image_create.py batch assets/articles/公众号/drafts/YYYYMMDD-slug/imgs/prompts/ -o assets/articles/公众号/drafts/YYYYMMDD-slug/imgs/
 ```
 
 单张：`python {baseDir}/scripts/image_create.py generate imgs/prompts/01-cover.md -o imgs/01-cover.png`

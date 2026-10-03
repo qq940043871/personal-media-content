@@ -5,7 +5,7 @@
 包装层 video/asr/llm_processor 已消除，直接使用 providers 客户端）。
 
 用法：
-    python media-cli.py pipeline video-article                 # 批量处理 storage/videos_input
+    python media-cli.py pipeline video-article                 # 批量处理 system/storage/videos_input
     python media-cli.py pipeline video-article --video x.mp4   # 单个视频
     python media-cli.py pipeline video-article --input-dir <目录>
 
@@ -16,7 +16,7 @@
     result = gen.generate_full_article({'text': '转写文本', 'frames': []})
 
 输出：
-    storage/videos_output/<video>/{frames,audio,audio_txt,articles}；
+    system/storage/videos_output/<video>/{frames,audio,audio_txt,articles}；
     抽帧→音频→转写→成文 四步各自断点续跑（已有产物自动跳过）
 
 依赖：

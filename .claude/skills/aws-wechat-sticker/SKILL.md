@@ -89,7 +89,7 @@ metadata:
 
 ### 第1步：环境检查 + 本篇约束（合并 YAML）
 
-若本篇在 **`assets/wechat/drafts/…/`** 下：按 **`.aws-article/config.yaml` → 本篇 `article.yaml`** 合并读取约束（同键本篇优先，最后层覆盖），重点字段：`multi_image_count`、`tone`、`target_reader`、`custom_sticker_style` > `default_sticker_style`（**须为 YAML 字符串列表**；`custom_*` 非空时优先于 `default_*`；多候选时智能体择一并写回本篇为**单元素列表**）。若无有效 YAML，以用户口述主题 + skill 默认值作为约束。
+若本篇在 **`assets/articles/公众号/drafts/…/`** 下：按 **`.aws-article/config.yaml` → 本篇 `article.yaml`** 合并读取约束（同键本篇优先，最后层覆盖），重点字段：`multi_image_count`、`tone`、`target_reader`、`custom_sticker_style` > `default_sticker_style`（**须为 YAML 字符串列表**；`custom_*` 非空时优先于 `default_*`；多候选时智能体择一并写回本篇为**单元素列表**）。若无有效 YAML，以用户口述主题 + skill 默认值作为约束。
 
 ### 第2步：确定选题
 
@@ -126,7 +126,7 @@ topics 产出的贴图卡片 / 用户直接给主题 / 用户提供素材图片�
 **调用专用 API 时**（在**仓库根**执行，路径按本篇 `imgs/` 调整）：
 
 ```bash
-python {baseDir}/../aws-wechat-article-images/scripts/image_create.py batch assets/wechat/drafts/YYYYMMDD-slug/imgs/prompts/ -o assets/wechat/drafts/YYYYMMDD-slug/imgs/
+python {baseDir}/../aws-wechat-article-images/scripts/image_create.py batch assets/articles/公众号/drafts/YYYYMMDD-slug/imgs/prompts/ -o assets/articles/公众号/drafts/YYYYMMDD-slug/imgs/
 ```
 
 单张：`python {baseDir}/../aws-wechat-article-images/scripts/image_create.py generate imgs/prompts/01.md -o imgs/01.png`

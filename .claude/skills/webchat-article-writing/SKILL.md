@@ -45,7 +45,7 @@ python {baseDir}/scripts/write_article.py optimize-title "标题1" "标题2" "�
 - **凭证外发**：该 API key 以 `Authorization: Bearer <key>` 头发送到火山方舟 Chat Completions API
 - **内容外发**：Prompt 包含文章主题/大纲/配置约束，整体 POST 给 LLM 端点
 - **文件读（项目内）**：`config/.env`、`config/settings.py`
-- **文件写**：`assets/wechat/drafts/YYYYMMDD-标题slug/draft.md`
+- **文件写**：`assets/articles/公众号/drafts/YYYYMMDD-标题slug/draft.md`
 - **shell**：仅 `python3` 执行辅助脚本
 
 ## 路由
@@ -70,7 +70,7 @@ python {baseDir}/scripts/write_article.py optimize-title "标题1" "标题2" "�
 - [ ] 第4步：撰写完整文章（generate_article）
 - [ ] 第5步：优化标题（optimize_title）
 - [ ] 第6步：润色内容（polish_content）
-- [ ] 第7步：保存到 assets/wechat/drafts/ 目录
+- [ ] 第7步：保存到 assets/articles/公众号/drafts/ 目录
 - [ ] 第8步：展示并等待用户确认 ⛔
 ```
 
@@ -109,7 +109,7 @@ outline = generate_article_outline(topic=topic, word_count=3000)
 
 ### 第7步：保存
 
-- 创建目录：`assets/wechat/drafts/YYYYMMDD-标题slug/`
+- 创建目录：`assets/articles/公众号/drafts/YYYYMMDD-标题slug/`
 - 保存 `draft.md`、`article.md`
 - 创建 `article.yaml`（含 `publish_completed: false`）
 

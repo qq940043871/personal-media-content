@@ -33,7 +33,7 @@ metadata:
 ```bash
 python {baseDir}/scripts/publish.py check
 python {baseDir}/scripts/publish.py draft article.md --title "文章标题" --author "作者"
-python {baseDir}/scripts/publish.py draft assets/wechat/drafts/20260610-文章标题/ --title "文章标题"
+python {baseDir}/scripts/publish.py draft assets/articles/公众号/drafts/20260610-文章标题/ --title "文章标题"
 ```
 
 ## 能力披露（Capabilities）
@@ -84,7 +84,7 @@ python {baseDir}/scripts/publish.py draft assets/wechat/drafts/20260610-文章�
 
 ### 第2步：读取文章
 
-读取 `assets/wechat/drafts/YYYYMMDD-标题slug/article.md` 或用户指定的 markdown 文件。
+读取 `assets/articles/公众号/drafts/YYYYMMDD-标题slug/article.md` 或用户指定的 markdown 文件。
 
 ### 第3步：转换 HTML
 

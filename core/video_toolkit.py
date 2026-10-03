@@ -41,47 +41,69 @@ class VideoToolkit:
             dict: {'duration': float, 'width': int, 'height': int, 'fps': float}
             失败返回 None
         """
+        ffprobe = self._ffprobe_path()
+        if ffprobe:
+            info = self._get_info_ffprobe(ffprobe, video_path)
+            if info:
+                return info
+        return self._get_info_fallback(video_path)
+
+    def _ffprobe_path(self):
+        """返回可用的 ffprobe 路径（与 ffmpeg 同目录优先，结果缓存）；找不到返回 None"""
+        if hasattr(self, '_ffprobe_resolved'):
+            return self._ffprobe_resolved or None
+        candidates = ['ffprobe']
+        ffmpeg_dir = os.path.dirname(self.ffmpeg_path)
+        if ffmpeg_dir:
+            candidates.insert(0, os.path.join(ffmpeg_dir, 'ffprobe'))
+        resolved = None
+        for c in candidates:
+            try:
+                subprocess.run([c, '-version'], stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL, check=True)
+                resolved = c
+                break
+            except (OSError, subprocess.CalledProcessError):
+                continue
+        self._ffprobe_resolved = resolved or ''
+        return resolved
+
+    def _get_info_ffprobe(self, ffprobe, video_path):
+        """ffprobe 结构化 JSON 解析（-show_entries 是 ffprobe 参数，ffmpeg 不认）"""
         try:
             cmd = [
-                self.ffmpeg_path, '-i', video_path, '-show_entries',
-                'format=duration:stream=width,height,r_frame_rate',
-                '-of', 'json', '-hide_banner'
+                ffprobe, '-v', 'error', '-select_streams', 'v:0',
+                '-show_entries', 'stream=width,height,r_frame_rate:format=duration',
+                '-of', 'json', video_path,
             ]
-            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output = self._decode_output(result.stdout)
-
             if not output:
-                return self._get_info_fallback(video_path)
-
-            try:
-                info = json.loads(output)
-            except json.JSONDecodeError:
-                return self._get_info_fallback(video_path)
+                return None
+            info = json.loads(output)
+            stream = next(iter(info.get('streams', [])), None)
+            if not stream:
+                return None
 
             duration = float(info.get('format', {}).get('duration', 0))
-            video_stream = next(
-                (s for s in info.get('streams', []) if s.get('codec_type') == 'video'),
-                {}
-            )
+            width = int(stream.get('width', 0))
+            height = int(stream.get('height', 0))
 
-            width = video_stream.get('width', 0)
-            height = video_stream.get('height', 0)
-
-            r_frame_rate = video_stream.get('r_frame_rate', '30/1')
+            r_frame_rate = stream.get('r_frame_rate', '30/1')
             if '/' in r_frame_rate:
                 num, den = map(int, r_frame_rate.split('/'))
                 fps = num / den if den != 0 else 30
             else:
-                fps = int(r_frame_rate)
+                fps = float(r_frame_rate)
 
             return {'duration': duration, 'width': width, 'height': height, 'fps': fps}
-
-        except Exception as e:
-            print(f"[Video] 获取视频信息失败: {e}")
-            return self._get_info_fallback(video_path)
+        except (OSError, ValueError, json.JSONDecodeError) as e:
+            print(f"[Video] ffprobe 解析失败: {e}")
+            return None
 
     def _get_info_fallback(self, video_path):
-        """正则解析 ffmpeg -i 输出的备用方案"""
+        """正则解析 ffmpeg -i 输出的备用方案（只在 Video 流行内找分辨率/帧率，
+        流 ID 的十六进制形如 [0x1]、0x31637661 会误匹配裸的 \\d+x\\d+）"""
         try:
             cmd = [self.ffmpeg_path, '-i', video_path]
             result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -92,12 +114,17 @@ class VideoToolkit:
             if dm:
                 duration = int(dm.group(1)) * 3600 + int(dm.group(2)) * 60 + float(dm.group(3))
 
-            width, height = 0, 0
-            sm = re.search(r'(\d+)x(\d+)', output)
-            if sm:
-                width, height = int(sm.group(1)), int(sm.group(2))
+            width, height, fps = 0, 0, 30
+            video_line = next((ln for ln in output.splitlines() if 'Video:' in ln), '')
+            if video_line:
+                sm = re.search(r'(\d{2,5})x(\d{2,5})', video_line)
+                if sm:
+                    width, height = int(sm.group(1)), int(sm.group(2))
+                fm = re.search(r'([\d.]+)\s*fps', video_line)
+                if fm:
+                    fps = float(fm.group(1))
 
-            return {'duration': duration, 'width': width, 'height': height, 'fps': 30}
+            return {'duration': duration, 'width': width, 'height': height, 'fps': fps}
         except Exception as e:
             print(f"[Video] 备用方案也失败: {e}")
             return None

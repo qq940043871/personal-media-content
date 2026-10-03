@@ -19,7 +19,7 @@
     ├── presets/             # 封面/格式/结构/标题等预设
     ├── config.yaml          # 真实配置（仅存本地磁盘）
     └── tmp/                 # 运行时临时目录（不入库）
-assets/wechat/drafts/        # 本篇稿件包 YYYYMMDD-AX/
+assets/articles/公众号/drafts/        # 本篇稿件包 YYYYMMDD-AX/
     └── <篇名>/
         ├── article.md / article.html / article.yaml
         ├── cover.png
@@ -29,7 +29,7 @@ assets/wechat/drafts/        # 本篇稿件包 YYYYMMDD-AX/
 ## 常用流程
 
 1. 选题、写大纲、成文（`aws-wechat-article-main/SKILL.md`）
-2. 稿件落在 `assets/wechat/drafts/<日期>-<编号>/`
+2. 稿件落在 `assets/articles/公众号/drafts/<日期>-<编号>/`
 3. 配图与封面按 `aws-wechat-article-images` 技能生成
 4. 发布走 `aws-wechat-article-publish`（默认进公众号草稿箱；`publish_method` 由
    `.aws-article/config.yaml` 控制）
