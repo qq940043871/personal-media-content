@@ -5,81 +5,634 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>创作统计 — AI 内容生产中台</title>
   <style>
+    /* ===== 全局变量 ===== */
+    :root {
+      --bg-deep: #070b14;
+      --bg-main: #0c1222;
+      --bg-card: rgba(255, 255, 255, 0.03);
+      --bg-card-hover: rgba(255, 255, 255, 0.06);
+      --border-glass: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(0, 212, 255, 0.3);
+      --text-primary: #e8ecf5;
+      --text-secondary: #8b95ad;
+      --text-muted: #5a6378;
+      --neon-cyan: #00d4ff;
+      --neon-purple: #a855f7;
+      --neon-blue: #3b82f6;
+      --neon-green: #10b981;
+      --neon-amber: #f59e0b;
+      --neon-red: #ef4444;
+      --neon-pink: #ec4899;
+      --gradient-neon: linear-gradient(135deg, #00d4ff 0%, #a855f7 100%);
+      --gradient-aurora: linear-gradient(135deg, rgba(0,212,255,0.15) 0%, rgba(168,85,247,0.15) 50%, rgba(236,72,153,0.1) 100%);
+      --shadow-glow-cyan: 0 0 20px rgba(0, 212, 255, 0.15);
+      --shadow-glow-purple: 0 0 20px rgba(168, 85, 247, 0.15);
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --radius-sm: 6px;
+      --font-sans: "SF Pro Display", -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI Variable", sans-serif;
+      --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, monospace;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-           background: #f5f7fa; color: #1a1a2e; }
-    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white; padding: 24px 32px; }
-    .header h1 { font-size: 24px; margin-bottom: 4px; }
-    .header p { opacity: 0.9; font-size: 14px; }
-    .header .updated { float: right; font-size: 12px; opacity: 0.8; margin-top: 6px; }
-    .nav { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 0 32px; }
-    .nav a { display: inline-block; padding: 14px 20px; color: #555; text-decoration: none;
-             border-bottom: 3px solid transparent; font-size: 14px; }
-    .nav a.active { color: #667eea; border-bottom-color: #667eea; font-weight: 600; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 24px 32px; }
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-             gap: 16px; margin-bottom: 24px; }
-    .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .card .label { font-size: 13px; color: #888; margin-bottom: 8px; }
-    .card .value { font-size: 28px; font-weight: 700; color: #1a1a2e; }
-    .card .value small { font-size: 14px; font-weight: 500; color: #666; }
-    .card .sub { font-size: 12px; color: #aaa; margin-top: 4px; }
-    .card.green .value { color: #10b981; }
-    .card.red .value { color: #ef4444; }
-    .card.blue .value { color: #3b82f6; }
-    .card.purple .value { color: #8b5cf6; }
-    .section { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px;
-               box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .section h2 { font-size: 16px; margin-bottom: 16px; padding-bottom: 12px;
-                  border-bottom: 1px solid #eee; }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+      line-height: 1.6;
+    }
+
+    /* ===== 动态背景：网格 + 光晕 ===== */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -20%;
+      left: -10%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(circle, rgba(0, 212, 255, 0.08) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+      animation: floatA 18s ease-in-out infinite alternate;
+    }
+
+    .bg-orb {
+      position: fixed;
+      bottom: -20%;
+      right: -10%;
+      width: 50%;
+      height: 50%;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.08) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+      animation: floatB 22s ease-in-out infinite alternate;
+    }
+
+    @keyframes floatA {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(5%, 8%) scale(1.1); }
+    }
+
+    @keyframes floatB {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-6%, -5%) scale(1.15); }
+    }
+
+    /* ===== 顶部导航 ===== */
+    .topbar {
+      position: relative;
+      z-index: 10;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(12, 18, 34, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--gradient-neon);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: var(--shadow-glow-cyan);
+      position: relative;
+    }
+
+    .brand-logo::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 14px;
+      background: var(--gradient-neon);
+      filter: blur(12px);
+      opacity: 0.4;
+      z-index: -1;
+    }
+
+    .brand-text h1 {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      background: var(--gradient-neon);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .brand-text p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--neon-green);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--neon-green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--neon-green); }
+      50% { opacity: 0.5; box-shadow: 0 0 12px var(--neon-green); }
+    }
+
+    .updated-time {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* ===== 导航标签 ===== */
+    .nav {
+      position: relative;
+      z-index: 10;
+      padding: 0 40px;
+      display: flex;
+      gap: 4px;
+      background: rgba(12, 18, 34, 0.5);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .nav a {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 22px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      position: relative;
+      transition: all 0.25s ease;
+      border-bottom: 2px solid transparent;
+    }
+
+    .nav a:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .nav a.active {
+      color: var(--neon-cyan);
+      border-bottom-color: var(--neon-cyan);
+    }
+
+    .nav a.active::before {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40%;
+      height: 2px;
+      background: var(--neon-cyan);
+      filter: blur(6px);
+      opacity: 0.8;
+    }
+
+    /* ===== 主容器 ===== */
+    .container {
+      position: relative;
+      z-index: 5;
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 32px 40px;
+    }
+
+    .page-header {
+      margin-bottom: 28px;
+    }
+
+    .page-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .page-header h2 span {
+      background: var(--gradient-neon);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page-header p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ===== 玻璃卡片 ===== */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: var(--border-glow);
+      box-shadow: var(--shadow-glow-cyan);
+      background: var(--bg-card-hover);
+    }
+
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .card .label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 500;
+    }
+
+    .card .value {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      font-family: var(--font-mono);
+      line-height: 1.1;
+    }
+
+    .card .value small {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-left: 4px;
+      font-family: var(--font-sans);
+    }
+
+    .card .sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-glass);
+    }
+
+    .card.cyan .value { color: var(--neon-cyan); text-shadow: 0 0 20px rgba(0, 212, 255, 0.3); }
+    .card.purple .value { color: var(--neon-purple); text-shadow: 0 0 20px rgba(168, 85, 247, 0.3); }
+    .card.green .value { color: var(--neon-green); text-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
+    .card.blue .value { color: var(--neon-blue); text-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+    .card.amber .value { color: var(--neon-amber); text-shadow: 0 0 20px rgba(245, 158, 11, 0.3); }
+    .card.red .value { color: var(--neon-red); text-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
+    .card.pink .value { color: var(--neon-pink); text-shadow: 0 0 20px rgba(236, 72, 153, 0.3); }
+
+    .card .icon {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 22px;
+      opacity: 0.3;
+    }
+
+    /* ===== 区块面板 ===== */
+    .section {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 24px;
+      right: 24px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
+      opacity: 0.5;
+    }
+
+    .section h2 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-glass);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section h2::before {
+      content: '';
+      width: 3px;
+      height: 16px;
+      background: var(--gradient-neon);
+      border-radius: 2px;
+    }
+
+    /* ===== 表格 ===== */
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #f0f0f0; }
-    th { color: #888; font-weight: 500; font-size: 12px; text-transform: uppercase; }
-    .status { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
-    .status.done { background: #d1fae5; color: #065f46; }
-    .status.running { background: #dbeafe; color: #1e40af; }
-    .status.pending { background: #fef3c7; color: #92400e; }
-    .status.failed { background: #fee2e2; color: #991b1b; }
-    .status.skipped { background: #e5e7eb; color: #374151; }
-    .empty { color: #aaa; font-size: 13px; padding: 14px 0; text-align: center; }
-    .bar { height: 8px; border-radius: 4px; background: #eef2ff; margin-top: 6px; overflow: hidden; }
-    .bar i { display: block; height: 100%; background: linear-gradient(90deg, #667eea, #8b5cf6); }
+
+    th {
+      padding: 12px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text-secondary);
+      transition: background 0.2s ease;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    td strong { color: var(--text-primary); font-weight: 600; }
+
+    /* ===== 状态标签 ===== */
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .status::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+
+    .status.done { background: rgba(16, 185, 129, 0.12); color: #34d399; }
+    .status.done::before { background: #34d399; box-shadow: 0 0 6px #34d399; }
+
+    .status.running { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+    .status.running::before { background: #60a5fa; box-shadow: 0 0 6px #60a5fa; animation: pulse 1.5s ease-in-out infinite; }
+
+    .status.pending { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
+    .status.pending::before { background: #fbbf24; }
+
+    .status.failed { background: rgba(239, 68, 68, 0.12); color: #f87171; }
+    .status.failed::before { background: #f87171; box-shadow: 0 0 6px #f87171; }
+
+    .status.skipped { background: rgba(148, 163, 184, 0.12); color: #94a3b8; }
+    .status.skipped::before { background: #94a3b8; }
+
+    .status.drafts { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
+    .status.drafts::before { background: #fbbf24; }
+
+    .status.published { background: rgba(16, 185, 129, 0.12); color: #34d399; }
+    .status.published::before { background: #34d399; }
+
+    /* ===== 空状态 ===== */
+    .empty {
+      color: var(--text-muted);
+      font-size: 13px;
+      padding: 24px 0;
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* ===== 进度条 ===== */
+    .bar {
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.06);
+      margin-top: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      background: var(--gradient-neon);
+      border-radius: 3px;
+      position: relative;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .bar i::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 20px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3));
+      animation: shimmer 2s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-20px); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateX(20px); opacity: 0; }
+    }
+
+    /* ===== 进入动画 ===== */
+    .card, .section {
+      animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    .cards .card:nth-child(1) { animation-delay: 0.05s; }
+    .cards .card:nth-child(2) { animation-delay: 0.1s; }
+    .cards .card:nth-child(3) { animation-delay: 0.15s; }
+    .cards .card:nth-child(4) { animation-delay: 0.2s; }
+    .cards .card:nth-child(5) { animation-delay: 0.25s; }
+    .cards .card:nth-child(6) { animation-delay: 0.3s; }
+
+    .section:nth-of-type(1) { animation-delay: 0.2s; }
+    .section:nth-of-type(2) { animation-delay: 0.3s; }
+    .section:nth-of-type(3) { animation-delay: 0.4s; }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ===== 滚动条 ===== */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-deep); }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 768px) {
+      .topbar { padding: 16px 20px; }
+      .nav { padding: 0 20px; }
+      .nav a { padding: 12px 16px; font-size: 12.5px; }
+      .container { padding: 20px; }
+      .cards { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+      .card .value { font-size: 24px; }
+    }
   </style>
 </head>
 <body>
-  <div class="header">
-    <span class="updated" id="inv-updated"></span>
-    <h1>🎬 AI 内容生产中台</h1>
-    <p>创作统计 · 内容资产总览（生成与发布由 AI agent 执行，这里看结果）</p>
+  <div class="bg-orb"></div>
+
+  <!-- 顶部栏 -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-logo">⚡</div>
+      <div class="brand-text">
+        <h1>AI CONTENT STUDIO</h1>
+        <p>智能内容生产中台 · Control Panel</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="status-pill">
+        <span class="status-dot"></span>
+        系统运行中
+      </div>
+      <div class="updated-time" id="inv-updated">--:--:--</div>
+    </div>
   </div>
+
+  <!-- 导航 -->
   <div class="nav">
     <a href="/" class="active">📊 创作统计</a>
     <a href="/workbench">🚀 项目工作台</a>
     <a href="/tasks">📋 任务中心</a>
     <a href="/assets">📦 素材库</a>
   </div>
+
+  <!-- 主内容 -->
   <div class="container">
+    <div class="page-header">
+      <h2><span>创作总览</span></h2>
+      <p>小说创作 · 发布资产 · 生产任务 — 全链路数据实时监控</p>
+    </div>
+
+    <!-- 创作资产卡片 -->
     <div class="cards" id="inv-cards"></div>
 
+    <!-- 小说列表 -->
     <div class="section">
-      <h2>📚 小说（创作类）</h2>
+      <h2>📚 小说创作库</h2>
       <table>
-        <thead><tr><th>书名</th><th>章节数</th><th>字数</th><th>篇幅占比</th><th>最近更新</th></tr></thead>
+        <thead><tr><th>书名</th><th>章节数</th><th>字数</th><th style="min-width:200px">篇幅占比</th><th>最近更新</th></tr></thead>
         <tbody id="novels-table"></tbody>
       </table>
     </div>
 
+    <!-- 发布资产 -->
     <div class="section">
-      <h2>📦 发布资产（编写类产物 · assets/）</h2>
+      <h2>📦 发布资产（assets/）</h2>
       <table>
-        <thead><tr><th>平台</th><th>状态</th><th>文件</th><th>更新时间</th></tr></thead>
+        <thead><tr><th>平台 / 空间</th><th>状态</th><th>文件</th><th>更新时间</th></tr></thead>
         <tbody id="assets-table"></tbody>
       </table>
     </div>
 
+    <!-- 运行统计卡片 -->
     <div class="cards" id="run-cards"></div>
 
+    <!-- 最近任务 -->
     <div class="section">
       <h2>🕐 最近任务</h2>
       <table>
@@ -94,35 +647,52 @@ function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+// ===== 数字滚动动画 =====
+function animateValue(el, start, end, duration = 800) {
+  const startTime = performance.now();
+  function step(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const val = Math.floor(start + (end - start) * eased);
+    el.firstChild.nodeValue = val.toLocaleString();
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
 // ===== 创作统计 =====
 async function loadInventory() {
   const inv = await (await fetch('/api/inventory')).json();
   const n = inv.novels, ast = inv.assets, pub = inv.publish;
 
-  document.getElementById('inv-updated').textContent = '更新于 ' + inv.generated_at_str;
+  document.getElementById('inv-updated').textContent = inv.generated_at_str || '';
 
   const rec = pub.records || {};
   const publishTotal = (pub.feishu_published || 0) + (rec.success || 0);
-  document.getElementById('inv-cards').innerHTML = `
-    <div class="card purple"><div class="label">小说（创作类）</div>
-      <div class="value">${n.total_books}<small> 本</small></div>
-      <div class="sub">共 ${n.total_chapters} 章 · ${n.total_words_wan} 万字</div></div>
-    <div class="card blue"><div class="label">发布资产（编写类）</div>
-      <div class="value">${ast.total}<small> 项</small></div>
-      <div class="sub">待发 ${ast.drafts} · 已发 ${ast.published}（assets/）</div></div>
-    <div class="card"><div class="label">书评分析</div>
-      <div class="value">${inv.analyses_count}<small> 篇</small></div>
-      <div class="sub">（已迁出至 personal-read-book）</div></div>
-    <div class="card"><div class="label">主题/文集</div>
-      <div class="value">${inv.family.files}<small> 份</small></div>
-      <div class="sub">${inv.family.themes} 个主题 · assets/novels</div></div>
-    <div class="card green"><div class="label">成片</div>
-      <div class="value">${inv.videos_output}<small> 条</small></div>
-      <div class="sub">storage/videos_output</div></div>
-    <div class="card green"><div class="label">发布记录</div>
-      <div class="value">${publishTotal}<small> 次</small></div>
-      <div class="sub">飞书批量 ${pub.feishu_published || 0} · 平台记录 成功${rec.success || 0}/失败${rec.failed || 0}</div></div>
-  `;
+
+  const cardData = [
+    { icon: '📚', label: '小说作品', value: n.total_books, unit: '本', sub: `共 ${n.total_chapters} 章 · ${n.total_words_wan} 万字`, color: 'purple' },
+    { icon: '📄', label: '发布资产', value: ast.total, unit: '项', sub: `待发 ${ast.drafts} · 已发 ${ast.published}`, color: 'cyan' },
+    { icon: '📝', label: '书评分析', value: inv.analyses_count, unit: '篇', sub: '已迁出至 personal-read-book', color: 'blue' },
+    { icon: '🎬', label: '主题文集', value: inv.family.files, unit: '份', sub: `${inv.family.themes} 个主题 · assets/novels`, color: 'pink' },
+    { icon: '🎥', label: '成片产出', value: inv.videos_output, unit: '条', sub: 'storage/videos_output', color: 'green' },
+    { icon: '🚀', label: '发布记录', value: publishTotal, unit: '次', sub: `飞书 ${pub.feishu_published || 0} · 成功${rec.success || 0}/失败${rec.failed || 0}`, color: 'amber' },
+  ];
+
+  document.getElementById('inv-cards').innerHTML = cardData.map(c => `
+    <div class="card ${c.color}">
+      <div class="icon">${c.icon}</div>
+      <div class="label">${c.label}</div>
+      <div class="value" data-target="${c.value}">0<small> ${c.unit}</small></div>
+      <div class="sub">${c.sub}</div>
+    </div>
+  `).join('');
+
+  // 触发数字动画
+  document.querySelectorAll('#inv-cards .value').forEach(el => {
+    const target = parseInt(el.dataset.target);
+    animateValue(el, 0, target);
+  });
 
   const maxWords = Math.max(...n.books.map(b => b.words), 1);
   document.getElementById('novels-table').innerHTML = n.books.map(b => `
@@ -130,32 +700,46 @@ async function loadInventory() {
       <td><strong>${esc(b.book)}</strong></td>
       <td>${b.chapters} 章</td>
       <td>${b.words_wan} 万字</td>
-      <td style="min-width:160px"><div class="bar"><i style="width:${Math.round(b.words / maxWords * 100)}%"></i></div></td>
-      <td>${b.updated_at_str}</td>
+      <td><div class="bar"><i style="width:${Math.round(b.words / maxWords * 100)}%"></i></div></td>
+      <td style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted)">${b.updated_at_str}</td>
     </tr>`).join('') || '<tr><td colspan="5" class="empty">assets/novels/ 下没有小说正文</td></tr>';
 
   document.getElementById('assets-table').innerHTML = ast.items.map(f => `
     <tr>
-      <td>${esc(f.platform)}${f.space ? '/' + esc(f.space) : ''}</td>
-      <td><span class="status ${f.status === 'drafts' ? 'pending' : 'done'}">${f.status}</span></td>
-      <td>${esc(f.file)}</td>
-      <td>${f.updated_at_str}</td>
+      <td>${esc(f.platform)}${f.space ? ' / ' + esc(f.space) : ''}</td>
+      <td><span class="status ${f.status}">${f.status}</span></td>
+      <td style="color:var(--text-primary)">${esc(f.file)}</td>
+      <td style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted)">${f.updated_at_str}</td>
     </tr>`).join('') || '<tr><td colspan="4" class="empty">资产库为空（agent 生成内容后写入 assets/**/drafts/ 自动出现）</td></tr>';
 }
 
-// ===== 生产运行统计（次要）=====
+// ===== 生产运行统计 =====
 async function loadStats() {
   const res = await fetch('/api/stats');
   const data = await res.json();
   const t = data.tasks;
   const a = data.assets;
 
-  document.getElementById('run-cards').innerHTML = `
-    <div class="card blue"><div class="label">任务总数</div><div class="value">${t.total}</div><div class="sub">今日完成 ${t.today_done} · 失败 ${t.today_failed}</div></div>
-    <div class="card green"><div class="label">已完成任务</div><div class="value">${t.by_status.done || 0}</div><div class="sub">平均耗时 ${t.avg_duration_seconds}s</div></div>
-    <div class="card"><div class="label">待处理</div><div class="value">${t.by_status.pending || 0}</div><div class="sub">运行中 ${t.by_status.running || 0}</div></div>
-    <div class="card purple"><div class="label">素材资产</div><div class="value">${a.total}</div><div class="sub">${a.tag_count} 个标签 · ${a.total_size_mb} MB</div></div>
-  `;
+  const runCards = [
+    { icon: '📊', label: '任务总数', value: t.total, sub: `今日完成 ${t.today_done} · 失败 ${t.today_failed}`, color: 'blue' },
+    { icon: '✅', label: '已完成任务', value: t.by_status.done || 0, sub: `平均耗时 ${t.avg_duration_seconds}s`, color: 'green' },
+    { icon: '⏳', label: '待处理', value: t.by_status.pending || 0, sub: `运行中 ${t.by_status.running || 0}`, color: 'amber' },
+    { icon: '🗂️', label: '素材资产', value: a.total, sub: `${a.tag_count} 个标签 · ${a.total_size_mb} MB`, color: 'purple' },
+  ];
+
+  document.getElementById('run-cards').innerHTML = runCards.map(c => `
+    <div class="card ${c.color}">
+      <div class="icon">${c.icon}</div>
+      <div class="label">${c.label}</div>
+      <div class="value" data-target="${c.value}">0</div>
+      <div class="sub">${c.sub}</div>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('#run-cards .value').forEach(el => {
+    const target = parseInt(el.dataset.target);
+    animateValue(el, 0, target);
+  });
 }
 
 async function loadRecentTasks() {
@@ -165,10 +749,10 @@ async function loadRecentTasks() {
   tbody.innerHTML = data.tasks.map(t => `
     <tr>
       <td><span class="status ${t.status}">${t.status}</span></td>
-      <td>${esc(t.name)}</td>
+      <td style="color:var(--text-primary)">${esc(t.name)}</td>
       <td>${esc(t.task_type)}</td>
-      <td>${t.created_at_str}</td>
-      <td>${t.duration ? t.duration.toFixed(1) + 's' : '-'}</td>
+      <td style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted)">${t.created_at_str}</td>
+      <td style="font-family:var(--font-mono);font-size:12px;">${t.duration ? t.duration.toFixed(1) + 's' : '-'}</td>
     </tr>
   `).join('') || '<tr><td colspan="5" class="empty">暂无任务记录</td></tr>';
 }
