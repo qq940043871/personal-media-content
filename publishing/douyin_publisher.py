@@ -222,7 +222,7 @@ class DouyinPublisher(BasePublisher):
                 page = context.new_page()
                 page.goto(self.UPLOAD_URL, wait_until='domcontentloaded', timeout=60000)
                 try:
-                    page.wait_for_selector(self.SEL_FILE_INPUT, state='attach', timeout=30000)
+                    page.wait_for_selector(self.SEL_FILE_INPUT, state='attached', timeout=30000)
                 except PlaywrightTimeout:
                     raise RuntimeError(
                         '上传页未就绪：登录态可能已失效，'
