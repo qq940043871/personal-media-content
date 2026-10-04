@@ -1,0 +1,13 @@
+title: HTTP 的前世今生：状态码与请求头一次讲透
+author: haswhere
+digest: 从 HTTP/0.9 到 HTTP/3，一个协议走了三十多年。这篇文章把它的来龙去脉讲清楚，重点拆解状态码、请求头、响应头这些天天见却未必读懂的细节。
+publish_completed: true
+media_id: 5OivsAtmcvqcNBKweAQot3u84CxEVt6SOn9mmhS5f5JCmAV1Wb5k8JOxBsYUH9Gq
+image_source: generated
+default_structure: [教程式]
+default_title_style: [干货型]
+default_format_preset: [极简黑]
+default_cover_image_style: [简约]
+default_article_image_style: [概念讲解]
+default_closing_block: []
+default_sticker_style: []
