@@ -7,8 +7,8 @@
 - 发布记录（幂等，跳过已发布，记录在 system/storage/db/feishu_published.json）
 
 用法：
-    python -m publishing.novel_publisher --chapters-dir ./assets/novels/cangyuantu/chapters
-    python -m publishing.novel_publisher --file ./assets/novels/cangyuantu/chapters/8-续写-第1章.txt
+    python -m publishing.novel_publisher --chapters-dir ./assets/novels/沧元图续写/chapters
+    python -m publishing.novel_publisher --file ./assets/novels/沧元图续写/chapters/8-续写-第1章.txt
 输出：
     人读进度文本；发布记录见 system/storage/db/feishu_published.json
 依赖：
@@ -280,9 +280,9 @@ def main():
     else:
         parser.print_help()
         print("\n示例:")
-        print("  python publish_novel_feishu.py --chapters-dir ./assets/novels/cangyuantu/chapters")
-        print("  python publish_novel_feishu.py --file ./assets/novels/cangyuantu/chapters/8-续写-第1章.txt")
-        print("  python publish_novel_feishu.py --chapters-dir ./assets/novels/cangyuantu/chapters --recursive --force")
+        print("  python publish_novel_feishu.py --chapters-dir ./assets/novels/沧元图续写/chapters")
+        print("  python publish_novel_feishu.py --file ./assets/novels/沧元图续写/chapters/8-续写-第1章.txt")
+        print("  python publish_novel_feishu.py --chapters-dir ./assets/novels/沧元图续写/chapters --recursive --force")
 
 
 if __name__ == '__main__':
