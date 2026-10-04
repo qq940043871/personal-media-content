@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<!-- HTML→视频 契约：总时长 15 秒（core/html_video.py 逐帧按绝对时间 seek） -->
+<meta name="video-duration" content="15">
+<title>火力发电厂有多大？大烟囱是干嘛的？</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: linear-gradient(180deg, #04091a 0%, #081030 45%, #0c1a45 100%);
+    color: #eaf2ff; position: relative;
+  }
+
+  /* ===== 顶部进度条（15s 线性走满） ===== */
+  .progress { position: fixed; top: 0; left: 0; right: 0; height: 12px; z-index: 99;
+              background: rgba(255,255,255,.06); }
+  .progress i { display: block; height: 100%; width: 100%;
+                background: linear-gradient(90deg, #00e5ff, #ffd75e);
+                transform-origin: left; transform: scaleX(0);
+                animation: progress 15s linear both; }
+  @keyframes progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+  /* ===== 场景层：15s 主时间线控制出入场 ===== */
+  .scene { position: absolute; inset: 0; display: flex; flex-direction: column;
+           align-items: center; justify-content: center; padding: 0 80px;
+           opacity: 0; }
+  .s1 { animation: s1 15s linear both; }
+  .s2 { animation: s2 15s linear both; }
+  .s3 { animation: s3 15s linear both; }
+  .s4 { animation: s4 15s linear both; }
+  @keyframes s1 { 0%,18.6% { opacity: 1; } 21.3%,100% { opacity: 0; } }
+  @keyframes s2 { 0%,20% { opacity: 0; } 24%,56% { opacity: 1; } 58.6%,100% { opacity: 0; } }
+  @keyframes s3 { 0%,56.6% { opacity: 0; } 60%,81.3% { opacity: 1; } 83.3%,100% { opacity: 0; } }
+  @keyframes s4 { 0%,81.3% { opacity: 0; } 84.6%,100% { opacity: 1; } }
+
+  .pop { animation: pop .55s cubic-bezier(.2,1.6,.4,1) both; }
+  @keyframes pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
+  .rise { animation: rise .6s ease-out both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(50px); }
+                    to { opacity: 1; transform: translateY(0); } }
+  .glow { animation: glow 2s ease-in-out infinite alternate; }
+  @keyframes glow {
+    from { text-shadow: 0 0 18px rgba(0,229,255,.35); }
+    to   { text-shadow: 0 0 46px rgba(0,229,255,.85); } }
+
+  .badge { font-size: 38px; letter-spacing: 6px; color: #00e5ff;
+           border: 3px solid rgba(0,229,255,.5); border-radius: 60px;
+           padding: 16px 46px; margin-bottom: 70px; }
+  .title { font-size: 100px; font-weight: 900; text-align: center; line-height: 1.3; }
+  .title .q { color: #ffd75e; }
+  .subtitle { font-size: 46px; color: #9fb3d9; margin-top: 60px; text-align: center; }
+
+  /* ===== 场景2：厂区有多大 ===== */
+  .s2cap { font-size: 54px; font-weight: 700; margin-bottom: 60px; }
+  .s2cap b { color: #00e5ff; }
+  .grid { display: grid; grid-template-columns: repeat(10, 44px); gap: 8px;
+          margin-bottom: 80px; }
+  .cell { width: 44px; height: 44px; border-radius: 10px; opacity: 0;
+          animation: cellpop .4s cubic-bezier(.2,1.4,.4,1) both; }
+  .c0 { background: rgba(0,229,255,.20); }
+  .c1 { background: rgba(0,229,255,.38); }
+  .c2 { background: rgba(0,229,255,.55); }
+  .c3 { background: rgba(77,163,255,.45); }
+  .c4 { background: rgba(255,215,94,.5); }
+  @keyframes cellpop { from { opacity: 0; transform: scale(.3); }
+                       to { opacity: 1; transform: scale(1); } }
+  .stats { display: flex; gap: 30px; }
+  .stat { background: rgba(255,255,255,.05); border: 3px solid rgba(0,229,255,.3);
+          border-radius: 34px; padding: 38px 40px; text-align: center; }
+  .stat .v { font-size: 62px; font-weight: 900; color: #ffd75e; }
+  .stat .k { font-size: 40px; color: #9fb3d9; margin-top: 14px; }
+
+  /* ===== 场景3：冷却塔 ===== */
+  .towerbox { position: relative; height: 470px; margin-bottom: 50px; }
+  .tower { position: absolute; left: 50%; top: 90px; transform: translateX(-50%);
+           width: 330px; height: 380px;
+           background: linear-gradient(90deg, #8ba6cf 0%, #dfe9ff 42%, #f4f9ff 52%, #93aed8 100%);
+           clip-path: polygon(12% 0, 88% 0, 61% 44%, 74% 100%, 26% 100%, 39% 44%);
+           animation: pop .55s cubic-bezier(.2,1.6,.4,1) 8.7s both; }
+  .band { position: absolute; left: 0; right: 0; top: 11%; height: 7%;
+          background: #ff6b6b; }
+  .band.b2 { top: 20%; height: 4%; }
+  .vapor { position: absolute; left: 50%; top: 30px; width: 110px; height: 110px;
+           border-radius: 50%; background: rgba(240,248,255,.85);
+           filter: blur(14px); opacity: 0;
+           animation: vapor 2.3s ease-out infinite; }
+  @keyframes vapor {
+    0%   { transform: translate(-50%, 0) scale(.5); opacity: 0; }
+    18%  { opacity: .95; }
+    100% { transform: translate(-50%, -200px) scale(1.7); opacity: 0; } }
+  .vwrap { position: absolute; left: 0; right: 0; top: 0; height: 120px;
+           pointer-events: none; }
+  .vwrap .vapor { left: calc(50% + var(--dx)); top: 10px; }
+
+  .s3label { position: relative; height: 96px; width: 100%;
+             display: flex; align-items: center; justify-content: center;
+             font-size: 72px; font-weight: 900; }
+  .lwrong, .lright { position: absolute; opacity: 0; }
+  .lwrong { color: #ff8a8a; animation: l1 15s linear both; }
+  .lright { color: #5cf2c7; animation: l2 15s linear both; }
+  @keyframes l1 { 0%,57.3% { opacity: 0; transform: scale(.6); }
+                  58.7% { opacity: 1; transform: scale(1); }
+                  64.6% { opacity: 1; }
+                  66% { opacity: 0; transform: scale(.9); }
+                  100% { opacity: 0; } }
+  @keyframes l2 { 0%,65.3% { opacity: 0; transform: scale(.6); }
+                  66.7% { opacity: 1; transform: scale(1); }
+                  100% { opacity: 1; transform: scale(1); } }
+  .s3cap { font-size: 48px; color: #c7d6f2; text-align: center; line-height: 1.6; }
+  .s3cap b { color: #5cf2c7; }
+
+  /* ===== 场景4：结论 ===== */
+  .card { background: rgba(255,255,255,.06); border: 3px solid rgba(0,229,255,.35);
+          border-radius: 48px; padding: 90px 70px; text-align: center;
+          box-shadow: 0 0 60px rgba(0,229,255,.15); }
+  .card .big { font-size: 84px; font-weight: 900; line-height: 1.45; }
+  .card .big b { color: #5cf2c7; }
+  .card .why { font-size: 44px; color: #9fb3d9; margin-top: 50px; line-height: 1.6; }
+  .card .why b { color: #ffd75e; }
+  .cta { margin-top: 90px; font-size: 46px; color: #00e5ff; letter-spacing: 4px; }
+</style>
+</head>
+<body>
+  <div class="progress"><i></i></div>
+
+  <!-- 场景1：标题（0–3s） -->
+  <section class="scene s1">
+    <div class="badge pop" style="animation-delay:.2s">知识科普 · 第 3 期</div>
+    <h1 class="title glow pop" style="animation-delay:.5s">发电厂有多大？<br><span class="q">大烟囱</span>是干嘛的？</h1>
+    <p class="subtitle rise" style="animation-delay:1.1s">15 秒带你进厂看个明白</p>
+  </section>
+
+  <!-- 场景2：厂区规模（3–8.5s） -->
+  <section class="scene s2">
+    <p class="s2cap pop" style="animation-delay:3.2s">一座大电厂占地 ≈ <b>100 个足球场</b></p>
+    <div class="grid" id="grid"></div>
+    <div class="stats">
+      <div class="stat rise" style="animation-delay:4.5s">
+        <div class="v">≈ 50 层楼</div>
+        <div class="k">冷却塔的高度</div>
+      </div>
+      <div class="stat rise" style="animation-delay:5s">
+        <div class="v">≈ 1 万吨</div>
+        <div class="k">一天烧掉的煤</div>
+      </div>
+    </div>
+  </section>
+  <script>
+    // 10×10 = 100 格「足球场」，对角线波次点亮（加载期生成，时间线仍是纯 CSS）
+    (function () {
+      var g = document.getElementById('grid');
+      for (var r = 0; r < 10; r++) {
+        for (var c = 0; c < 10; c++) {
+          var d = document.createElement('div');
+          d.className = 'cell c' + ((r * 10 + c) % 5);
+          d.style.animationDelay = (3.3 + (r + c) * 0.03) + 's';
+          g.appendChild(d);
+        }
+      }
+    })();
+  </script>
+
+  <!-- 场景3：大烟囱真相（8.5–12.5s） -->
+  <section class="scene s3">
+    <div class="towerbox">
+      <div class="vwrap">
+        <div class="vapor" style="--dx:-70px; animation-delay:8.8s"></div>
+        <div class="vapor" style="--dx:0px;   animation-delay:9.25s"></div>
+        <div class="vapor" style="--dx:70px;  animation-delay:9.7s"></div>
+        <div class="vapor" style="--dx:-30px; animation-delay:10.15s"></div>
+        <div class="vapor" style="--dx:35px;  animation-delay:10.6s"></div>
+      </div>
+      <div class="tower">
+        <div class="band"></div>
+        <div class="band b2"></div>
+      </div>
+    </div>
+    <div class="s3label">
+      <span class="lwrong">这是「烟囱」？❌</span>
+      <span class="lright">这是冷却塔 ✅</span>
+    </div>
+    <p class="s3cap rise" style="animation-delay:10.6s">冒的是<b>水蒸气</b>：把用完的废蒸汽<br>凉成水，循环回去再烧</p>
+  </section>
+
+  <!-- 场景4：结论（12.2s–结束） -->
+  <section class="scene s4">
+    <div class="card pop" style="animation-delay:12.5s">
+      <p class="big">大白塔 = <b>冷却塔</b><br>白雾是<b>水蒸气</b></p>
+      <p class="why">不是烟！真正排烟气的烟囱细得多<br>废气也要先净化才能排</p>
+    </div>
+    <p class="cta rise" style="animation-delay:14s">关注 · 每天 15 秒涨知识</p>
+  </section>
+</body>
+</html>

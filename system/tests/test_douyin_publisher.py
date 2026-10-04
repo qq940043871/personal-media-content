@@ -132,3 +132,25 @@ def test_multi_platform_publish_without_video_fails_cleanly(stub_playwright_ok, 
     r = mp.publish('douyin', '标题', '正文')
     assert r.success is False
     assert 'video' in r.error
+
+
+def test_desc_fragments():
+    frags = DouyinPublisher._desc_fragments('35岁，我的上半生。#中年 #普通人')
+    assert '我的上半生' in frags
+    assert DouyinPublisher._desc_fragments('') == []
+    assert DouyinPublisher._desc_fragments('标题党') == ['标题党']
+
+
+def test_publish_draft_option_passthrough(stub_playwright_ok, fake_cookies, monkeypatch, tmp_path):
+    # draft=True 透传给浏览器流程，且不要求发布回执（流程桩只回收参数）
+    captured = {}
+    def fake_flow(self, video_path, text, tags, draft=False):
+        captured.update(video=video_path, text=text, tags=tags, draft=draft)
+        return {'video': video_path, 'draft': draft, 'confirmed': True}
+    monkeypatch.setattr(DouyinPublisher, '_publish_video_via_browser', fake_flow)
+    video = tmp_path / 'v.mp4'; video.write_bytes(b'x')
+    r = DouyinPublisher().publish_markdown('标题', '', options={
+        'video': str(video), 'draft': True, 'tags': ['生活']})
+    assert r.success is True
+    assert captured['draft'] is True and captured['tags'] == ['生活']
+    assert r.raw.get('draft') is True

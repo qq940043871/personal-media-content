@@ -64,6 +64,25 @@ def cmd_video_extract(args):
             sys.exit(1)
 
 
+def cmd_video_html2video(args):
+    """HTML 动画页面 → mp4（知识科普视频方案：帧步进 + ffmpeg 合成）"""
+    from core.html_video import HtmlVideoRenderer
+
+    renderer = HtmlVideoRenderer()
+    print(f"正在渲染 {args.html} → {args.output} "
+          f"（{args.width}x{args.height} @ {args.fps}fps，"
+          f"时长 {str(args.duration) + 's' if args.duration else '读页面 meta'}）...")
+    try:
+        result = renderer.render(args.html, args.output, fps=args.fps,
+                                 duration=args.duration, width=args.width,
+                                 height=args.height, music=args.music)
+    except Exception as e:
+        print(f"❌ 渲染失败: {e}")
+        sys.exit(1)
+    print(f"✅ 渲染完成: {result['output']} "
+          f"（{result['duration']:.1f}s / {result['frames']} 帧）")
+
+
 def register(subparsers):
     p_video = subparsers.add_parser('video', help='视频处理相关')
     video_sub = p_video.add_subparsers(dest='video_cmd', help='视频子命令')
@@ -85,3 +104,13 @@ def register(subparsers):
     p_ve.add_argument('input', help='输入视频路径')
     p_ve.add_argument('output', help='输出目录')
     p_ve.set_defaults(func=cmd_video_extract)
+
+    p_vh = video_sub.add_parser('html2video', help='HTML 动画页面渲染成视频（知识科普方案）')
+    p_vh.add_argument('html', help='HTML 源文件（含 video-duration meta 与 CSS 时间线）')
+    p_vh.add_argument('-o', '--output', required=True, help='输出 mp4 路径')
+    p_vh.add_argument('--fps', type=int, default=30, help='帧率（默认 30）')
+    p_vh.add_argument('--duration', type=float, help='总秒数（默认读 <meta name="video-duration">）')
+    p_vh.add_argument('--width', type=int, default=1080, help='视口宽（默认 1080）')
+    p_vh.add_argument('--height', type=int, default=1920, help='视口高（默认 1920）')
+    p_vh.add_argument('--music', help='背景音乐文件（可选）')
+    p_vh.set_defaults(func=cmd_video_html2video)

@@ -60,6 +60,7 @@ python media-cli.py feishu publish --title "标题" --content-file article.md
 python media-cli.py wechat publish --title "标题" --content-file article.md
 python media-cli.py douyin login        # 首次：扫码保存抖音登录态（Playwright）
 python media-cli.py douyin publish --video-file video.mp4 --title "标题" --tags 生活 vlog
+python media-cli.py douyin publish --video-file v.mp4 --title "标题" --draft  # 存草稿箱，App 内再发布
 python media-cli.py publish --title "标题" --content-file article.md \
     --platforms feishu wechat
 python media-cli.py publish --title "标题" --video video.mp4 \
@@ -72,17 +73,19 @@ python -m publishing.douyin publish --asset assets/videos/douyin/drafts/v.mp4 --
 python media-cli.py asset init                          # 建齐资产库骨架（创作域×drafts/published）
 python media-cli.py asset ls --type articles            # 待发布资产清单
 python media-cli.py asset publish --file assets/articles/我的专栏/drafts/x.md
+python media-cli.py video html2video src.html -o out.mp4  # HTML 动画页 → 视频（科普线，源稿在 assets/videos/kepu/source/）
 python media-cli.py asset spaces                        # 飞书知识库映射
 
 # 小说转化（章节正文在各作品 chapters/ 下）
-python media-cli.py story script "assets/novels/cangyuantu/chapters/8-续写-第1章.txt" \
+python media-cli.py story script "assets/novels/沧元图续写/chapters/8-续写-第1章.txt" \
     -s 玄幻 -n 8 -o script.md
-python media-cli.py story article "assets/novels/cangyuantu/chapters/8-续写-第1章.txt" \
+python media-cli.py story merge assets/novels/平凡人生/chapters \n    -o assets/novels/平凡人生/chapters-番茄版 --per 8 --target 2200  # 短章并长（单元边界优先）
+python media-cli.py story article "assets/novels/沧元图续写/chapters/8-续写-第1章.txt" \
     --type deep -o article.md
 
 # 素材 / 任务 / 看板 / 工作台
 python media-cli.py asset scan novel --project 沧元图 \
-    --dir ./assets/novels/cangyuantu/chapters/
+    --dir ./assets/novels/沧元图续写/chapters/
 python media-cli.py task stats
 python media-cli.py dashboard start --port 5000
 #   浏览器打开 http://localhost:5000/workbench → 新建/管理项目、编辑正文、发布三平台

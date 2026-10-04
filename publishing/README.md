@@ -19,7 +19,7 @@
 |------|------|--------------|-----------|
 | `wechat_publisher` | 公众号发布（草稿箱） | `python -m publishing.wechat publish --asset assets/articles/公众号/drafts/x.md --json` | publish-wechat |
 | `feishu_publisher` | 飞书文档发布（可移入知识库） | `python -m publishing.feishu publish --asset assets/wikis/<库>/drafts/x.md --json` | publish-feishu |
-| `douyin_publisher` | 抖音视频发布（Playwright 自动化） | `python -m publishing.douyin publish --asset assets/videos/douyin/drafts/v.mp4 --json` | publish-douyin |
+| `douyin_publisher` | 抖音视频发布（Playwright 自动化；`--draft` 存草稿箱，成功不归档） | `python -m publishing.douyin publish --asset assets/videos/douyin/drafts/v.mp4 [--draft] --json` | publish-douyin |
 | `novel_publisher` | 小说章节批量发飞书（幂等） | `python -m publishing.novel_publisher --chapters-dir <章节目录>` | novel-publish |
 | `asset_store` | 资产库读写/状态流转/建骨架 | `python -m publishing.asset_store ls --json`、`... init` | asset-store |
 

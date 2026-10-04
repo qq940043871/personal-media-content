@@ -22,10 +22,10 @@
 
 | 业务线/资产 | 过程文档 | 正文/分析 | 说明/技能 | 素材与媒体 |
 |--------|----------|-----------|-----------|------------|
-| `assets/novels/<书>` | `<书>/process/`、`review/` | `<书>/chapters/`（time_rift 为 `novel/chapters/`） | `CLAUDE.md`、`.claude/` | `source/`、`scripts/`、`meta/` |
+| `assets/novels/<书>` | `<书>/process/`、`review/` | `<书>/chapters/`（时间裂隙2089 为 `novel/chapters/`） | `CLAUDE.md`、`.claude/` | `source/`、`scripts/`、`meta/` |
 | `assets/novels/<主题>` | — | `<主题>/短视频脚本.md`、`视频分镜脚本.md` | — | 亲情视频主题与 guides 文集 |
 | `assets/<类型>/<工程>` | `drafts/` | `published/`（+meta.json） | assets/README.md | 类型 = novels/articles/videos/wikis |
-| `assets/videos/douyin` | `docs/`、`scripts/` | — | `README.md` | `media/`（成片原件不入库）；`assets/` 运行时生成 |
+| `assets/videos/douyin` | `docs/`、`scripts/`、`source/`（HTML 动画源稿） | — | `README.md` | `media/`（成片原件不入库）；`assets/` 运行时生成 |
 | `.claude/skills/`（公众号技能线） | — | `assets/articles/公众号/drafts/<篇名>/` | 各技能 `SKILL.md` | `aws.env`、`.aws-article/` 在仓库根（不入库） |
 
 > 书评分析线（hello_weixin_book）已于 2026-10 整体迁出至上游 `personal-read-book` 仓库，本仓不再维护。
@@ -49,7 +49,7 @@
 - 更新结构时同步改：根 `README.md`、`ARCHITECTURE.md`、对应业务线 README。
 - 文档中「运行时生成」的目录不手工创建、不提交；新的大文件类型（视频/模型/压缩包）先补 `.gitignore` 规则。
 - 小说正文路径已重排为 `assets/novels/<book>/chapters/`；旧文档中的 `8-正文/`、仓库根平铺 `8-续写-*.txt` 均已过时。
-- 遗留脚本（写死分家前路径，如 `cangyuantu/scripts/*.sh`）文件头已有退役横幅，勿直接运行。
+- 遗留脚本（写死分家前路径，如 `沧元图续写/scripts/*.sh`）文件头已有退役横幅，勿直接运行。
 - 不要把密钥写进文档；模型凭据统一走根 `.env` 的 `PROVIDER_*` 注册表，官方号技能线走其 `aws.env`（均不入库）。
 
 ## 扩展清单（改架构时照此走）
@@ -76,7 +76,7 @@ python media-cli.py doctor --live          # 环境自检 + 探活（接入/排�
 python media-cli.py status
 python media-cli.py dashboard start --port 5000
 python media-cli.py asset scan novel --project 沧元图 \
-  --dir ./assets/novels/cangyuantu/chapters/
+  --dir ./assets/novels/沧元图续写/chapters/
 python media-cli.py asset init               # 建齐资产库骨架（wechat/douyin 各一个、feishu 按知识库、novels 按书名）
 python media-cli.py asset ls --json          # 待发布资产库清单
 python media-cli.py asset publish --file assets/articles/我的专栏/drafts/x.md   # 发布并自动归档
@@ -86,8 +86,8 @@ python -m pytest system/tests/                    # 平台层回归
 ## 状态快照（2026-10 梳理）
 
 - 平台层：v3 架构（Provider 注册表 / 发布契约 / cli 包 / doctor）；模型全线小米 MiMo `mimo-v2.6-pro`（ASR `mimo-v2.5-asr`），已端到端验证
-- `time_rift`《时间裂隙：2089》：600 章正文已完结，工作重心是修订；详见 `assets/novels/time_rift/AGENTS.md`；修订期一次性脚本已归档至 `review/_archive_oneshot/`（勿运行）
-- `cangyuantu` 沧元图续写：300 章正文在 `chapters/`
-- `diff_life` 平凡人生：300 章正文在 `chapters/`
-- `little_man` 普通人的一生：完整版 + 分章
+- `时间裂隙2089`《时间裂隙：2089》：600 章正文已完结，工作重心是修订；详见 `assets/novels/时间裂隙2089/AGENTS.md`；修订期一次性脚本已归档至 `review/_archive_oneshot/`（勿运行）
+- `沧元图续写`：300 章正文在 `chapters/`（同人续写，无法在番茄等平台签约上架）
+- `平凡人生`：300 章正文在 `chapters/`
+- `普通人的一生`：完整版 + 分章
 - 已知外部依赖项：飞书发布需 `lark-cli auth login` 的 user 授权；公众号 API 需在后台把出口 IP 加入白名单；抖音发布为 Playwright 自动化（`pip install playwright && playwright install chromium` + `media-cli.py douyin login` 扫码，登录态 Cookie 在 `system/storage/douyin/` 不入库，发布时默认弹出浏览器窗口）（`doctor` 会给出精确指引）

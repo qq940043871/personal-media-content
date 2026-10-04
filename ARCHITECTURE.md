@@ -104,7 +104,7 @@ IMAGE_PROVIDER=ark   # 生图能力用谁
 - `story_to_article.py`：deep / summary / character / worldview
 - `publishing/novel_publisher.py`：幂等批量发飞书（发布记录在 `system/storage/db/feishu_published.json`）
 
-输入章节使用现行路径，如 `assets/novels/cangyuantu/chapters/8-续写-第1章.txt`。
+输入章节使用现行路径，如 `assets/novels/沧元图续写/chapters/8-续写-第1章.txt`。
 
 ### 4.3 资产与任务
 
@@ -113,6 +113,7 @@ IMAGE_PROVIDER=ark   # 生图能力用谁
 - `project_manager.py`：工作台项目模型（article/novel/video）+ 发布记录（running → success/failed），SQLite `system/storage/db/projects.db`
 - `inventory.py`：创作统计盘点——扫描 `assets/novels/`（书目按 `chapters/` 与 `novel/chapters/` 两代布局；无章节目录的子目录计为主题/文集）、发布资产 `assets/` 按文件夹内容自动盘点（`<工程>/drafts|published` 下散文件与 `<篇名>/` 工作区各计 1 篇，兼容旧版平铺，并按创作域 × 工程聚合工程统计表），汇总发布记录；带 mtime 签名缓存
 - `storage.py`：路径快捷与幂等检查
+- `html_video.py`：HTML → 视频渲染器——Playwright 帧步进截图 CSS 时间线页面，ffmpeg 合成 H.264（知识科普视频方案，HTML 契约见模块 docstring）
 
 ### 4.4 video_toolkit.py
 

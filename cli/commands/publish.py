@@ -204,7 +204,7 @@ def cmd_douyin_login(args):
 
 
 def cmd_douyin_publish(args):
-    """上传视频到抖音"""
+    """上传视频到抖音（--draft 存入草稿箱）"""
     from publishing.douyin_publisher import DouyinPublisher
 
     pub = DouyinPublisher()
@@ -212,9 +212,13 @@ def cmd_douyin_publish(args):
         'video': args.video_file,
         'tags': args.tags or [],
         'desc': args.desc or '',
+        'draft': args.draft,
     })
 
-    if result.success:
+    if result.success and args.draft:
+        print("✅ 已存入抖音草稿箱!")
+        print(f"   请在抖音 App 草稿箱内检查后手动发布，创作者后台: {result.url}")
+    elif result.success:
         print("✅ 发布流程完成!")
         print(f"   作品进入平台审核，稍后可在创作者后台查看: {result.url}")
     else:
@@ -391,11 +395,13 @@ def register(subparsers):
     p_dl.add_argument('--timeout', type=int, default=300, help='等待扫码的超时秒数（默认300）')
     p_dl.set_defaults(func=cmd_douyin_login)
 
-    p_dp = douyin_sub.add_parser('publish', help='上传视频到抖音')
+    p_dp = douyin_sub.add_parser('publish', help='上传视频到抖音（--draft 存草稿箱）')
     p_dp.add_argument('--video-file', required=True, help='视频文件路径')
     p_dp.add_argument('--title', required=True, help='视频标题/描述文案')
     p_dp.add_argument('--desc', help='描述文案（默认用标题）')
     p_dp.add_argument('--tags', nargs='*', help='话题标签（如 生活 vlog）')
+    p_dp.add_argument('--draft', action='store_true',
+                      help='存入抖音草稿箱而非直接发布')
     p_dp.set_defaults(func=cmd_douyin_publish)
 
     p_dc = douyin_sub.add_parser('check', help='检查抖音登录态是否有效')

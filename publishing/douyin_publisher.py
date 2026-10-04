@@ -10,6 +10,7 @@ Playwright 驱动创作者后台 + 登录态 Cookie 免扫码（思路参考 soc
     python -m publishing.douyin login                              # 首次：扫码保存登录态
     python -m publishing.douyin publish --video-file v.mp4 --title "标题" --tags 生活 vlog --json
     python -m publishing.douyin publish --asset assets/videos/douyin/drafts/v.mp4 --json
+    python -m publishing.douyin publish --video-file v.mp4 --title "标题" --draft  # 存草稿箱
     python -m publishing.douyin health --json                      # 实测登录态有效性
 输出：
     人读文本；--json 时输出 PublishResult.to_dict()；退出码 0=成功 1=失败
@@ -84,6 +85,9 @@ class DouyinPublisher(BasePublisher):
     SEL_EDITORS = ('div[contenteditable="true"]', '.ql-editor[contenteditable="true"]')
     # 发布按钮：accessible name / 文本严格等于「发布」（避免误点「定时发布」）
     SEL_PUBLISH_RE = re.compile(r'^\s*发布\s*$')
+    # 草稿按钮：文本严格等于「存草稿」或「暂存离开」（2026-10 实测创作者后台用「暂存离开」；
+    # 严格匹配避免误点「发布」「暂不发布」）
+    SEL_DRAFT_RE = re.compile(r'^\s*(存草稿|暂存离开)\s*$')
 
     # 判定登录失效的页面特征文案
     LOGIN_MARKERS = ('扫码登录', '二维码', '登录后即可')
@@ -144,7 +148,11 @@ class DouyinPublisher(BasePublisher):
                   '请运行 python media-cli.py douyin login 重新扫码')
 
     def publish_markdown(self, title, content_md, options=None) -> PublishResult:
-        """统一契约：视频上传发布（markdown 正文不适用；视频走 options['video']）"""
+        """统一契约：视频上传发布（markdown 正文不适用；视频走 options['video']）
+
+        options['draft']=True 时点「存草稿」而非「发布」，作品落入抖音草稿箱，
+        不做发布确认与内容管理页核验（改为草稿列表核验）。
+        """
         opts = options or {}
         video = opts.get('video') or ''
         if not video:
@@ -158,8 +166,9 @@ class DouyinPublisher(BasePublisher):
 
         text = (opts.get('desc') or '').strip() or title
         tags = _clean_tags(opts.get('tags'))
+        draft = bool(opts.get('draft'))
         try:
-            raw = self._publish_video_via_browser(video, text, tags)
+            raw = self._publish_video_via_browser(video, text, tags, draft=draft)
         except Exception as e:
             return PublishResult(success=False, platform=self.platform_id, title=title,
                                  error=str(e))
@@ -209,7 +218,7 @@ class DouyinPublisher(BasePublisher):
 
     # ===== 发布流程（Playwright）=====
 
-    def _publish_video_via_browser(self, video_path, text, tags):
+    def _publish_video_via_browser(self, video_path, text, tags, draft=False):
         from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 
         print(f"[抖音] 打开创作者后台（headless={config.DOUYIN_HEADLESS}）...")
@@ -235,6 +244,24 @@ class DouyinPublisher(BasePublisher):
                 self._wait_upload_done(page)
                 self._fill_description(page, text, tags)
 
+                if draft:
+                    btn = self._draft_button(page)
+                    if btn is None:
+                        raise RuntimeError('未找到「存草稿/暂存离开」按钮（创作者后台可能改版，'
+                                           '请更新 publishing/douyin_publisher.py 的选择器）')
+                    btn.click()
+                    print("[抖音] 已点击暂存/存草稿，等待平台回执...")
+                    self._confirm_dialog_if_any(page)
+                    if not self._wait_draft_saved(page):
+                        raise RuntimeError('已点击暂存/存草稿但未确认到成功回执，'
+                                           '请先到创作者后台核对草稿箱，避免重复保存')
+                    verified, evidence = self._verify_in_drafts(page, text)
+                    if not verified:
+                        print("[抖音] ⚠️ 自动核验未在列表页找到该草稿（草稿入口不在内容管理页），"
+                              "已保存回执成立，建议 App/后台人工过目，勿盲目重存")
+                    return {'video': video_path, 'tags': tags, 'draft': True,
+                            'confirmed': True, 'verified': verified, 'evidence': evidence}
+
                 btn = self._publish_button(page)
                 if btn is None:
                     raise RuntimeError('未找到发布按钮（创作者后台可能改版，'
@@ -252,6 +279,14 @@ class DouyinPublisher(BasePublisher):
             finally:
                 browser.close()
         return {'video': video_path, 'tags': tags, 'confirmed': True}
+
+    def _draft_button(self, page):
+        """定位「存草稿」按钮：严格匹配文本，避免误点「发布」"""
+        loc = page.locator('button').filter(has_text=self.SEL_DRAFT_RE)
+        if loc.count() > 0:
+            return loc.first
+        fallback = page.locator('button[class*="draft"]')
+        return fallback.first if fallback.count() > 0 else None
 
     def _publish_button(self, page):
         """定位发布按钮：严格匹配「发布」文本，避免误点「定时发布」"""
@@ -335,12 +370,90 @@ class DouyinPublisher(BasePublisher):
             page.wait_for_timeout(1500)
         return False
 
-    def _verify_in_manage(self, page, text, timeout=30):
-        """发布后核验：内容管理页的作品列表里应能找到文案片段（回执可能假阳性）"""
+    def _wait_draft_saved(self, page, timeout=40):
+        """暂存回执：离开发布页（content/post 不再在 URL）或出现保存提示即确认"""
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if 'content/post' not in page.url or self._has_text(
+                    page, ('存草稿成功', '已存草稿', '草稿已保存', '保存成功', '暂存成功', '已暂存')):
+                return True
+            page.wait_for_timeout(1500)
+        return False
+
+    def _confirm_dialog_if_any(self, page):
+        """暂存离开可能弹「确认离开/保存」对话框，有则点确认"""
+        for text in ('确 定', '确定', '确认', '保存并离开', '离开'):
+            try:
+                loc = page.get_by_text(text, exact=True)
+                if loc.count() > 0:
+                    loc.first.click()
+                    page.wait_for_timeout(800)
+                    return
+            except Exception:
+                continue
+
+    @staticmethod
+    def _desc_fragments(text):
+        """描述文案 → 核验用片段（按标点/空白切分取 ≥4 字者，兜底整句）"""
         import re as _re
         frags = [f for f in _re.split(r'[，。｜|#!\s]+', text or '') if len(f) >= 4]
         if not frags:
             frags = [text] if text else []
+        return frags
+
+    def _open_draft_list(self, page):
+        """尽力进入草稿列表：内容管理页点「草稿」页签，失败则试 tab=draft 参数"""
+        try:
+            page.goto(self.MANAGE_URL, wait_until='domcontentloaded', timeout=60000)
+            page.wait_for_timeout(4000)
+            tab = page.get_by_text('草稿', exact=True)
+            if tab.count() > 0:
+                tab.first.click()
+                page.wait_for_timeout(3000)
+                return
+        except Exception:
+            pass
+        try:
+            page.goto(self.MANAGE_URL + '?tab=draft',
+                      wait_until='domcontentloaded', timeout=60000)
+            page.wait_for_timeout(4000)
+        except Exception:
+            pass
+
+    def _verify_in_drafts(self, page, text, timeout=30):
+        """草稿核验（尽力而为）：找文案片段；找不到也返回证据文本，不作为硬失败
+
+        实测草稿入口不在内容管理页（2026-10：无「草稿」页签，审核状态筛选
+        仅 全部/已发布/审核中/未通过），故核验只做确认加分，回执才是硬依据。
+        Returns: (verified: bool, evidence: str)
+        """
+        frags = self._desc_fragments(text)
+        evidence = ''
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            # 1) 当前落点页（暂存离开后可能就落在草稿列表）
+            try:
+                body = page.inner_text('body')
+                evidence = evidence or body[:400]
+                if any(f in body for f in frags):
+                    return True, 'found on landing page'
+            except Exception:
+                pass
+            # 2) 内容管理页草稿入口（若平台将来提供）
+            self._open_draft_list(page)
+            try:
+                body = page.inner_text('body')
+                evidence = evidence or body[:400]
+                if any(f in body for f in frags):
+                    return True, 'found in manage drafts'
+            except Exception:
+                pass
+            page.wait_for_timeout(5000)
+        return False, evidence
+
+    def _verify_in_manage(self, page, text, timeout=30):
+        """发布后核验：内容管理页的作品列表里应能找到文案片段（回执可能假阳性）"""
+        frags = self._desc_fragments(text)
         deadline = time.time() + timeout
         while time.time() < deadline:
             page.goto(self.MANAGE_URL, wait_until='domcontentloaded', timeout=60000)
@@ -366,12 +479,14 @@ def main():
     p_login = sub.add_parser('login', parents=[common], help='扫码登录创作者后台，保存登录态 Cookie')
     p_login.add_argument('--timeout', type=int, default=300, help='等待扫码的超时秒数（默认300）')
 
-    p_pub = sub.add_parser('publish', help='上传发布视频')
+    p_pub = sub.add_parser('publish', help='上传发布视频（--draft 存入草稿箱）')
     p_pub.add_argument('--video-file', help='视频文件路径')
-    p_pub.add_argument('--asset', help='视频资产路径（assets/videos/douyin/drafts 下；成功后自动归档）')
+    p_pub.add_argument('--asset', help='视频资产路径（assets/videos/douyin/drafts 下；发布成功后自动归档，草稿不归档）')
     p_pub.add_argument('--title', help='视频标题/描述文案（--asset 时默认取文件名）')
     p_pub.add_argument('--desc', help='描述文案（默认用标题）')
     p_pub.add_argument('--tags', nargs='*', help='话题标签（如 生活 vlog）')
+    p_pub.add_argument('--draft', action='store_true',
+                       help='存入抖音草稿箱而非直接发布（发布成功不归档资产）')
     p_pub.add_argument('--asset-root', help='资产库根目录（默认 <仓库>/assets）')
 
     sub.add_parser('health', parents=[common], help='检查抖音登录态是否有效')
@@ -400,9 +515,11 @@ def main():
             raise SystemExit('❌ 请提供 --title')
 
         result = DouyinPublisher().publish_markdown(title, '', options={
-            'video': video, 'tags': args.tags or [], 'desc': args.desc or ''})
+            'video': video, 'tags': args.tags or [], 'desc': args.desc or '',
+            'draft': args.draft})
 
-        if result.success and args.asset:
+        # 草稿箱≠已发布：不触发资产归档，留在 drafts/ 等正式发布
+        if result.success and args.asset and not args.draft:
             moved = AssetStore(args.asset_root).mark_published(
                 os.path.abspath(args.asset), url=result.url, asset_id=result.id)
             if moved.get('success'):
@@ -411,8 +528,11 @@ def main():
         if args.json:
             print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
         else:
-            print('✅ 发布流程完成，作品进入平台审核' if result.success
-                  else f"❌ 发布失败: {result.error}")
+            if result.success:
+                print('✅ 已存入抖音草稿箱，请在 App 内检查后手动发布'
+                      if args.draft else '✅ 发布流程完成，作品进入平台审核')
+            else:
+                print(f"❌ 发布失败: {result.error}")
         raise SystemExit(0 if result.success else 1)
 
     if args.action == 'health':

@@ -24,6 +24,7 @@ def build_parser():
   %(prog)s video merge v1.mp4 v2.mp4 -o out.mp4  合并视频
   %(prog)s video extract frames video.mp4 out/   提取关键帧
   %(prog)s video extract audio video.mp4 out/    提取音频
+  %(prog)s video html2video video.html -o out.mp4  HTML 动画页渲染成视频
   %(prog)s asr transcribe audio.mp3              语音转写
   %(prog)s asr transcribe audio.mp3 --local --srt  本地转写+字幕
   %(prog)s llm chat "写一首诗"                    调用大模型

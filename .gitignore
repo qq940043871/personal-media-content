@@ -16,6 +16,7 @@ system/models/
 assets/videos/douyin/assets/
 **/*.mp4
 **/*.mp3
+**/*.wav
 **/*.zip
 **/*.7z
 **/*.rar

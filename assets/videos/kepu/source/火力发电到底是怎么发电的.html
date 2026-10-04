@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<!-- HTML→视频 契约：总时长 15 秒（core/html_video.py 逐帧按绝对时间 seek） -->
+<meta name="video-duration" content="15">
+<title>火力发电，到底怎么发电的？</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: linear-gradient(180deg, #04091a 0%, #081030 45%, #0c1a45 100%);
+    color: #eaf2ff; position: relative;
+  }
+
+  /* ===== 顶部进度条（15s 线性走满） ===== */
+  .progress { position: fixed; top: 0; left: 0; right: 0; height: 12px; z-index: 99;
+              background: rgba(255,255,255,.06); }
+  .progress i { display: block; height: 100%; width: 100%;
+                background: linear-gradient(90deg, #00e5ff, #ffd75e);
+                transform-origin: left; transform: scaleX(0);
+                animation: progress 15s linear both; }
+  @keyframes progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+  /* ===== 场景层：15s 主时间线控制出入场 ===== */
+  .scene { position: absolute; inset: 0; display: flex; flex-direction: column;
+           align-items: center; justify-content: center; padding: 0 80px;
+           opacity: 0; }
+  .s1 { animation: s1 15s linear both; }
+  .s2 { animation: s2 15s linear both; }
+  .s3 { animation: s3 15s linear both; }
+  .s4 { animation: s4 15s linear both; }
+  /* 场景1: 0–2.8s 可见 / 场景2: 3–8.4s / 场景3: 8.5–12.2s / 场景4: 12.2s–末尾 */
+  @keyframes s1 { 0%,18.6% { opacity: 1; } 21.3%,100% { opacity: 0; } }
+  @keyframes s2 { 0%,20% { opacity: 0; } 24%,56% { opacity: 1; } 58.6%,100% { opacity: 0; } }
+  @keyframes s3 { 0%,56.6% { opacity: 0; } 60%,81.3% { opacity: 1; } 83.3%,100% { opacity: 0; } }
+  @keyframes s4 { 0%,81.3% { opacity: 0; } 84.6%,100% { opacity: 1; } }
+
+  /* ===== 通用元素动画 ===== */
+  .pop { animation: pop .55s cubic-bezier(.2,1.6,.4,1) both; }
+  @keyframes pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
+  .rise { animation: rise .6s ease-out both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(50px); }
+                    to { opacity: 1; transform: translateY(0); } }
+  .glow { animation: glow 2s ease-in-out infinite alternate; }
+  @keyframes glow {
+    from { text-shadow: 0 0 18px rgba(0,229,255,.35); }
+    to   { text-shadow: 0 0 46px rgba(0,229,255,.85); } }
+
+  .badge { font-size: 38px; letter-spacing: 6px; color: #00e5ff;
+           border: 3px solid rgba(0,229,255,.5); border-radius: 60px;
+           padding: 16px 46px; margin-bottom: 70px; }
+  .title { font-size: 104px; font-weight: 900; text-align: center; line-height: 1.25; }
+  .title .q { color: #ffd75e; }
+  .subtitle { font-size: 46px; color: #9fb3d9; margin-top: 60px; text-align: center; }
+
+  /* ===== 场景2：发电厂三件套 ===== */
+  .plant { display: flex; align-items: flex-start; gap: 26px; margin-bottom: 90px; }
+  .dev { width: 240px; height: 300px; border-radius: 40px; position: relative;
+         background: rgba(255,255,255,.04); border: 3px solid rgba(0,229,255,.35);
+         overflow: hidden; }
+  .devname { font-size: 40px; font-weight: 700; color: #9fc7ff; margin-top: 18px;
+             white-space: nowrap; }
+  .col { display: flex; flex-direction: column; align-items: center; }
+
+  /* 锅炉：水层 + 火 + 蒸汽泡 */
+  .water { position: absolute; left: 0; right: 0; bottom: 24%; height: 42%;
+           background: linear-gradient(180deg, rgba(28,77,143,.55), rgba(47,111,209,.9)); }
+  .flame { position: absolute; bottom: 10px; width: 48px; height: 80px;
+           background: linear-gradient(180deg, #ffd75e, #ff7a3d 70%);
+           border-radius: 50% 50% 22% 22%;
+           transform-origin: bottom;
+           animation: flick .38s ease-in-out infinite alternate; }
+  @keyframes flick { from { transform: scaleY(.78) skewX(-4deg); }
+                     to   { transform: scaleY(1.12) skewX(4deg); } }
+  .bub { position: absolute; bottom: 26%; width: 26px; height: 26px; border-radius: 50%;
+         background: rgba(190,227,255,.85);
+         animation: bubrise 1.7s linear infinite; }
+  @keyframes bubrise {
+    0%   { transform: translateY(0) scale(.6); opacity: 0; }
+    15%  { opacity: .95; }
+    100% { transform: translateY(-430px) scale(1.25); opacity: 0; } }
+
+  /* 蒸汽管道 / 传动轴 */
+  .pipe { width: 44px; height: 28px; margin-top: 136px; border-radius: 14px;
+          background: rgba(77,163,255,.22); position: relative; overflow: hidden; }
+  .shaft { width: 36px; height: 14px; margin-top: 143px; border-radius: 7px;
+           background: rgba(0,229,255,.35); }
+  .puff { position: absolute; top: 4px; width: 20px; height: 20px; border-radius: 50%;
+          background: rgba(190,227,255,.9);
+          animation: puffmove 1.2s linear infinite; }
+  @keyframes puffmove {
+    0%   { transform: translateX(-24px); opacity: 0; }
+    30%  { opacity: 1; }
+    100% { transform: translateX(48px); opacity: 0; } }
+
+  /* 汽轮机 / 发电机：旋转转子 */
+  .rotorbox { position: absolute; left: 50%; top: 50%;
+              transform: translate(-50%,-50%); }
+  .rotor { position: relative; width: 150px; height: 150px;
+           animation: spin 4s linear 4.2s both; }
+  .gen .rotor { width: 120px; height: 120px; animation: spin 3.6s linear 4.4s both; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(720deg); } }
+  .blade { position: absolute; left: 50%; top: 50%; width: 16px; height: 66px;
+           margin: -66px 0 0 -8px; border-radius: 8px;
+           background: linear-gradient(180deg, #00e5ff, #1479c9);
+           transform-origin: 50% 100%; }
+  .hub { position: absolute; left: 50%; top: 50%; width: 34px; height: 34px;
+         margin: -17px 0 0 -17px; border-radius: 50%;
+         background: #eaf2ff; box-shadow: 0 0 18px rgba(0,229,255,.8); }
+
+  /* 发电机闪电 */
+  .bolt { position: absolute; top: -86px; left: 50%; font-size: 84px;
+          text-shadow: 0 0 26px rgba(255,215,94,.9);
+          animation: pop .45s cubic-bezier(.2,1.6,.4,1) both; }
+  .bolt.b2 { animation: pop .45s cubic-bezier(.2,1.6,.4,1) 5.2s both,
+                        glow2 1.6s ease-in-out 5.9s infinite alternate; }
+  @keyframes glow2 {
+    from { text-shadow: 0 0 10px rgba(255,215,94,.5); }
+    to   { text-shadow: 0 0 34px rgba(255,215,94,1); } }
+
+  .cap { font-size: 52px; font-weight: 700; text-align: center; line-height: 1.55; }
+  .cap b { color: #4da3ff; }
+  .cap .g { color: #ffd75e; }
+
+  /* ===== 场景3：能量变身链 ===== */
+  .s3label { font-size: 46px; color: #9fb3d9; letter-spacing: 4px; margin-bottom: 80px; }
+  .chain { display: flex; align-items: center; gap: 16px; margin-bottom: 110px; }
+  .chip { padding: 40px 28px; border-radius: 34px; font-size: 50px; font-weight: 900;
+          border: 3px solid; white-space: nowrap; }
+  .c1 { color: #ffb84d; border-color: rgba(255,184,77,.6); }
+  .c2 { color: #ff7a59; border-color: rgba(255,122,89,.6); }
+  .c3 { color: #4da3ff; border-color: rgba(77,163,255,.6); }
+  .c4 { color: #ffd75e; border-color: rgba(255,215,94,.65);
+        box-shadow: 0 0 34px rgba(255,215,94,.25); }
+  .arr { font-size: 52px; color: #5f7bb0; }
+  .wcap { font-size: 60px; font-weight: 900; text-align: center; }
+  .wcap .hl { color: #00e5ff; }
+
+  /* ===== 场景4：结论 ===== */
+  .card { background: rgba(255,255,255,.06); border: 3px solid rgba(0,229,255,.35);
+          border-radius: 48px; padding: 90px 70px; text-align: center;
+          box-shadow: 0 0 60px rgba(0,229,255,.15); }
+  .card .big { font-size: 88px; font-weight: 900; line-height: 1.45; }
+  .card .big b { color: #ffd75e; }
+  .card .why { font-size: 44px; color: #9fb3d9; margin-top: 50px; line-height: 1.6; }
+  .card .why b { color: #4da3ff; }
+  .cta { margin-top: 90px; font-size: 46px; color: #00e5ff; letter-spacing: 4px; }
+</style>
+</head>
+<body>
+  <div class="progress"><i></i></div>
+
+  <!-- 场景1：标题（0–3s） -->
+  <section class="scene s1">
+    <div class="badge pop" style="animation-delay:.2s">知识科普 · 第 2 期</div>
+    <h1 class="title glow pop" style="animation-delay:.5s">火力发电<br>到底怎么<span class="q">发电</span>的？</h1>
+    <p class="subtitle rise" style="animation-delay:1.1s">15 秒讲清你家的电从哪来</p>
+  </section>
+
+  <!-- 场景2：发电厂三件套（3–8.5s） -->
+  <section class="scene s2">
+    <div class="plant">
+      <!-- 锅炉 -->
+      <div class="col">
+        <div class="dev pop" style="animation-delay:3.2s">
+          <div class="water"></div>
+          <div class="flame" style="left:22%; animation-delay:3.4s"></div>
+          <div class="flame" style="left:42%; animation-delay:3.52s"></div>
+          <div class="flame" style="left:62%; animation-delay:3.46s"></div>
+          <div class="bub" style="left:20%; animation-delay:3.8s"></div>
+          <div class="bub" style="left:40%; animation-delay:4.15s"></div>
+          <div class="bub" style="left:58%; animation-delay:4.45s"></div>
+          <div class="bub" style="left:72%; animation-delay:4.75s"></div>
+        </div>
+        <div class="devname">锅炉</div>
+      </div>
+      <!-- 蒸汽管道 -->
+      <div class="pipe pop" style="animation-delay:3.7s">
+        <div class="puff" style="animation-delay:4s"></div>
+        <div class="puff" style="top:4px; animation-delay:4.4s"></div>
+        <div class="puff" style="top:4px; animation-delay:4.8s"></div>
+      </div>
+      <!-- 汽轮机 -->
+      <div class="col">
+        <div class="dev pop" style="animation-delay:3.4s">
+          <div class="rotorbox">
+            <div class="rotor">
+              <div class="blade" style="transform:rotate(0deg)"></div>
+              <div class="blade" style="transform:rotate(120deg)"></div>
+              <div class="blade" style="transform:rotate(240deg)"></div>
+              <div class="hub"></div>
+            </div>
+          </div>
+        </div>
+        <div class="devname">汽轮机</div>
+      </div>
+      <!-- 传动轴 -->
+      <div class="shaft pop" style="animation-delay:3.7s"></div>
+      <!-- 发电机 -->
+      <div class="col gen">
+        <div class="dev pop" style="animation-delay:3.6s; overflow:visible">
+          <span class="bolt b1" style="left:18%; animation-delay:4.6s">⚡</span>
+          <span class="bolt b2" style="left:58%; animation-delay:5.2s">⚡</span>
+          <div class="rotorbox">
+            <div class="rotor">
+              <div class="blade" style="transform:rotate(45deg)"></div>
+              <div class="blade" style="transform:rotate(165deg)"></div>
+              <div class="blade" style="transform:rotate(285deg)"></div>
+              <div class="hub"></div>
+            </div>
+          </div>
+        </div>
+        <div class="devname">发电机</div>
+      </div>
+    </div>
+    <p class="cap rise" style="animation-delay:4.1s">煤在锅炉里燃烧<br>把水烧成<span class="g">高压蒸汽</span></p>
+    <p class="cap rise" style="animation-delay:6.1s">蒸汽吹动汽轮机<br>带动<b>发电机</b>发出电</p>
+  </section>
+
+  <!-- 场景3：能量变身链（8.5–12.5s） -->
+  <section class="scene s3">
+    <p class="s3label rise" style="animation-delay:8.8s">—— 能量的变身之旅 ——</p>
+    <div class="chain">
+      <div class="chip c1 pop" style="animation-delay:9s">化学能</div>
+      <div class="arr rise" style="animation-delay:9.3s">→</div>
+      <div class="chip c2 pop" style="animation-delay:9.5s">热能</div>
+      <div class="arr rise" style="animation-delay:9.8s">→</div>
+      <div class="chip c3 pop" style="animation-delay:10s">机械能</div>
+      <div class="arr rise" style="animation-delay:10.3s">→</div>
+      <div class="chip c4 pop" style="animation-delay:10.5s">电能</div>
+    </div>
+    <p class="wcap rise" style="animation-delay:11.2s">烧水 · 转动 · <span class="hl">发电</span></p>
+  </section>
+
+  <!-- 场景4：结论（12.2s–结束） -->
+  <section class="scene s4">
+    <div class="card pop" style="animation-delay:12.5s">
+      <p class="big">火力发电的本质<br>就是<b>烧水</b></p>
+      <p class="why">核电站其实也在烧水<br>只是用<b>核裂变</b>代替了烧煤</p>
+    </div>
+    <p class="cta rise" style="animation-delay:14s">关注 · 每天 15 秒涨知识</p>
+  </section>
+</body>
+</html>

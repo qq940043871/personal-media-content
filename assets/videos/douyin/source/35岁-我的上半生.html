@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<!-- HTML→视频 契约：总时长 66 秒（core/html_video.py 逐帧按绝对时间 seek） -->
+<meta name="video-duration" content="66">
+<title>35岁，我的上半生</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: linear-gradient(180deg, #171009 0%, #221507 42%, #2e1c0a 100%);
+    color: #f2e6cc; position: relative;
+  }
+
+  /* ===== 全局氛围：胶片颗粒 / 暗角 / 浮尘 ===== */
+  .grain { position: fixed; inset: -140px; z-index: 90; pointer-events: none; opacity: .07;
+    background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+    animation: grain .8s linear infinite; }
+  @keyframes grain {
+    0% { transform: translate(0,0); } 20% { transform: translate(-50px,35px); }
+    40% { transform: translate(35px,-55px); } 60% { transform: translate(-30px,-25px); }
+    80% { transform: translate(45px,30px); } 100% { transform: translate(0,0); } }
+  .vignette { position: fixed; inset: 0; z-index: 89; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 46%, transparent 52%, rgba(0,0,0,.58) 100%); }
+  .dust span { position: absolute; border-radius: 50%; background: #ffdf9e;
+    filter: blur(2px); opacity: .22; animation: float var(--d) ease-in-out infinite alternate; }
+  @keyframes float { from { transform: translateY(0); opacity: .1; }
+                      to   { transform: translateY(-70px); opacity: .3; } }
+
+  /* ===== 场景层：66s 主时间线控制出入场 ===== */
+  .scene { position: absolute; inset: 0; display: flex; flex-direction: column;
+           align-items: center; justify-content: center; padding: 0 84px 240px;
+           opacity: 0; }
+  .s1  { animation: s1 66s linear both, kb1 66s linear both; }
+  .s2  { animation: s2 66s linear both, kb2 66s linear both; }
+  .s3  { animation: s3 66s linear both, kb3 66s linear both; }
+  .s4  { animation: s4 66s linear both, kb4 66s linear both; }
+  .s5  { animation: s5 66s linear both, kb5 66s linear both; }
+  .s6  { animation: s6 66s linear both, kb6 66s linear both; }
+  .s7  { animation: s7 66s linear both, kb7 66s linear both; }
+  .s8  { animation: s8 66s linear both, kb8 66s linear both; }
+  .s9  { animation: s9 66s linear both, kb9 66s linear both; }
+  .s10 { animation: s10 66s linear both, kb10 66s linear both; }
+
+  /* 场景1: 0–4.8 / s2: 4.8–11.5 / s3: 11.5–19.5 / s4: 19.5–25.5
+     s5: 25.5–31 / s6: 31–37.5 / s7: 37.5–44 / s8: 44–50.5
+     s9: 50.5–57.5 / s10: 57.5–66 */
+  @keyframes s1  { 0% { opacity: 1; } 6.36% { opacity: 1; } 7.27%,100% { opacity: 0; } }
+  @keyframes s2  { 0%,7.27% { opacity: 0; } 8.18%,16.67% { opacity: 1; } 17.42%,100% { opacity: 0; } }
+  @keyframes s3  { 0%,17.42% { opacity: 0; } 18.33%,28.79% { opacity: 1; } 29.55%,100% { opacity: 0; } }
+  @keyframes s4  { 0%,29.55% { opacity: 0; } 30.45%,37.88% { opacity: 1; } 38.64%,100% { opacity: 0; } }
+  @keyframes s5  { 0%,38.64% { opacity: 0; } 39.55%,46.21% { opacity: 1; } 46.97%,100% { opacity: 0; } }
+  @keyframes s6  { 0%,46.97% { opacity: 0; } 47.88%,56.06% { opacity: 1; } 56.82%,100% { opacity: 0; } }
+  @keyframes s7  { 0%,56.82% { opacity: 0; } 57.73%,65.91% { opacity: 1; } 66.67%,100% { opacity: 0; } }
+  @keyframes s8  { 0%,66.67% { opacity: 0; } 67.58%,75.76% { opacity: 1; } 76.52%,100% { opacity: 0; } }
+  @keyframes s9  { 0%,76.52% { opacity: 0; } 77.42%,86.36% { opacity: 1; } 87.12%,100% { opacity: 0; } }
+  @keyframes s10 { 0%,87.12% { opacity: 0; } 88.03%,100% { opacity: 1; } }
+  @keyframes kb1  { 0% { transform: scale(1); } 7.27%,100% { transform: scale(1.05); } }
+  @keyframes kb2  { 0%,7.27% { transform: scale(1.03); } 17.42%,100% { transform: scale(1.09); } }
+  @keyframes kb3  { 0%,17.42% { transform: scale(1.03); } 29.55%,100% { transform: scale(1.08); } }
+  @keyframes kb4  { 0%,29.55% { transform: scale(1.02); } 38.64%,100% { transform: scale(1.08); } }
+  @keyframes kb5  { 0%,38.64% { transform: scale(1.04); } 46.97%,100% { transform: scale(1.09); } }
+  @keyframes kb6  { 0%,46.97% { transform: scale(1.03); } 56.82%,100% { transform: scale(1.08); } }
+  @keyframes kb7  { 0%,56.82% { transform: scale(1.03); } 66.67%,100% { transform: scale(1.08); } }
+  @keyframes kb8  { 0%,66.67% { transform: scale(1.04); } 76.52%,100% { transform: scale(1.09); } }
+  @keyframes kb9  { 0%,76.52% { transform: scale(1.02); } 87.12%,100% { transform: scale(1.08); } }
+  @keyframes kb10 { 0%,87.12% { transform: scale(1); } 100% { transform: scale(1.05); } }
+
+  /* ===== 通用元素 ===== */
+  .rise { animation: rise .65s ease-out both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(46px); }
+                    to   { opacity: 1; transform: translateY(0); } }
+  .pop { animation: pop .55s cubic-bezier(.2,1.5,.4,1) both; }
+  @keyframes pop { from { opacity: 0; transform: scale(.55); }
+                   to   { opacity: 1; transform: scale(1); } }
+  .line { font-size: 55px; font-weight: 700; line-height: 1.55; text-align: center;
+          letter-spacing: 2px; margin-top: 34px;
+          text-shadow: 0 3px 18px rgba(0,0,0,.55); }
+  .line.dim { font-size: 47px; font-weight: 400; color: #c9b28c; }
+  .line .am { color: #f0b95c; }
+  .line .rd { color: #e2604a; }
+
+  /* 年份邮戳 */
+  .year { position: absolute; top: 218px; left: 96px; font-size: 42px; font-weight: 800;
+          color: #d24b3a; border: 4px solid rgba(210,75,58,.8); border-radius: 10px;
+          padding: 10px 26px; letter-spacing: 8px; transform: rotate(-7deg);
+          animation: stamp .5s cubic-bezier(.2,1.5,.4,1) both; }
+  @keyframes stamp { from { opacity: 0; transform: rotate(-7deg) scale(1.9); }
+                     to   { opacity: 1; transform: rotate(-7deg) scale(1); } }
+
+  /* ===== 场景1：开场 ===== */
+  .s1 .kicker { font-size: 40px; letter-spacing: 14px; color: #c9b28c;
+                margin-bottom: 66px; }
+  .s1 h1 { font-size: 150px; font-weight: 900; letter-spacing: 10px; line-height: 1.2;
+           text-align: center;
+           text-shadow: 0 6px 40px rgba(240,185,92,.25); }
+  .s1 h1 .am { color: #f0b95c; }
+  .s1 .seal { display: inline-block; margin-top: 60px; font-size: 44px; font-weight: 800;
+              color: #f3e2c2; background: rgba(196,74,58,.85); border-radius: 14px;
+              padding: 16px 40px; letter-spacing: 10px;
+              box-shadow: 0 8px 30px rgba(0,0,0,.4); }
+  .s1 .sub { margin-top: 70px; font-size: 42px; color: #b7a181; letter-spacing: 6px; }
+
+  /* ===== 场景2：1991 家属院 ===== */
+  .block { position: relative; width: 620px; height: 520px; background: #332413;
+           border: 6px solid #55402a; border-radius: 10px 10px 0 0;
+           padding: 34px; display: grid; grid-template-columns: repeat(4, 1fr);
+           grid-auto-rows: 1fr; gap: 22px;
+           animation: pop .6s cubic-bezier(.2,1.4,.4,1) 5.3s both;
+           box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  .win { background: #1b1209; border-radius: 4px; animation: lighton .4s ease-out both; }
+  .win.on { background: #ffc36b; box-shadow: 0 0 26px 6px rgba(255,195,107,.55); }
+  @keyframes lighton { from { opacity: .2; } to { opacity: 1; } }
+  .moonsmall { position: absolute; top: 130px; right: 190px; width: 110px; height: 110px;
+               border-radius: 50%; box-shadow: -30px 20px 0 0 #f4dfae;
+               animation: pop .6s ease-out 5.6s both; }
+
+  /* ===== 场景3：童年 ===== */
+  .tvwrap { position: relative; margin-bottom: 10px; }
+  .tv { position: relative; width: 560px; height: 400px; background: #4a3520;
+        border: 6px solid #6b4e2e; border-radius: 26px; padding: 40px 46px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.5);
+        animation: pop .6s cubic-bezier(.2,1.4,.4,1) 12.1s both; }
+  .screen { width: 100%; height: 100%; border-radius: 18px; background: #10131a;
+            overflow: hidden; position: relative;
+            background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 3px, transparent 3px 7px),
+                              radial-gradient(circle at 50% 50%, rgba(120,160,255,.25), transparent 70%);
+            animation: flicker .18s steps(2) infinite; }
+  @keyframes flicker { from { filter: brightness(.92); } to { filter: brightness(1.1); } }
+  .tv::before, .tv::after { content: ''; position: absolute; bottom: 100%; left: 40%;
+                            width: 6px; height: 120px; background: #6b4e2e; border-radius: 3px;
+                            transform-origin: bottom; }
+  .tv::before { transform: rotate(-24deg); }
+  .tv::after  { transform: rotate(24deg); }
+  .popsicle { position: absolute; top: -60px; right: 40px; width: 86px; height: 210px;
+              border-radius: 43px 43px 16px 16px;
+              background: linear-gradient(180deg, #ffb36b 0 55%, #f2924b 55%);
+              box-shadow: 0 14px 34px rgba(0,0,0,.35);
+              animation: pop .55s cubic-bezier(.2,1.5,.4,1) 12.7s both; }
+  .popsicle::after { content: ''; position: absolute; top: 100%; left: 50%;
+                     width: 22px; height: 96px; background: #c8a06a;
+                     transform: translateX(-50%); border-radius: 0 0 10px 10px; }
+
+  /* ===== 场景4：2008 ===== */
+  .duo { display: flex; gap: 70px; margin-bottom: 16px; }
+  .duo .cell { width: 330px; padding: 44px 0 40px; text-align: center;
+               background: rgba(255,255,255,.045); border: 3px solid rgba(242,230,204,.22);
+               border-radius: 22px; }
+  .cell .mon { font-size: 44px; font-weight: 800; letter-spacing: 6px; color: #cdb289; }
+  .cell .name { font-size: 52px; font-weight: 800; margin-top: 14px; }
+  .cell .icon { height: 120px; display: flex; align-items: flex-end;
+                justify-content: center; margin-bottom: 24px; }
+  .candle { position: relative; width: 56px; height: 92px; background: linear-gradient(180deg,#f6ead2,#e2cfa8);
+            border-radius: 8px 8px 4px 4px; }
+  .candle::after { content: ''; position: absolute; top: -14px; left: 50%; width: 4px; height: 14px;
+                   background: #6b543a; transform: translateX(-50%); }
+  .flame { position: absolute; bottom: 100%; left: 50%; width: 34px; height: 56px;
+           transform: translateX(-50%); margin-bottom: 6px;
+           background: radial-gradient(circle at 50% 78%, #fff6c4 0%, #ffc056 42%, #ff7a3c 72%, transparent 76%);
+           border-radius: 50% 50% 50% 50% / 64% 64% 36% 36%;
+           transform-origin: 50% 100%;
+           animation: flick .32s ease-in-out infinite alternate;
+           filter: drop-shadow(0 0 16px rgba(255,170,60,.75)); }
+  @keyframes flick { from { transform: translateX(-50%) scaleY(1) skewX(-3deg); }
+                     to   { transform: translateX(-50%) scaleY(1.14) skewX(4deg); } }
+  .torch { position: relative; width: 20px; height: 150px; background: linear-gradient(180deg,#d8b56e,#8a6a33);
+           border-radius: 10px; }
+  .torch::before { content: ''; position: absolute; top: -16px; left: 50%; width: 66px; height: 26px;
+                   background: #b08c4a; border-radius: 50%; transform: translateX(-50%); }
+  .torch .flame { bottom: calc(100% + 6px); width: 46px; height: 76px; }
+  .cell.w .name { color: #9fb8d8; } .cell.o .name { color: #f0b95c; }
+
+  /* ===== 场景5：2010 准考证 ===== */
+  .ticket { width: 640px; background: #f3e9d3; color: #3a2c1c; border-radius: 14px;
+            padding: 46px 54px; transform: rotate(-2.5deg);
+            box-shadow: 0 24px 70px rgba(0,0,0,.5); position: relative;
+            animation: pop .6s cubic-bezier(.2,1.4,.4,1) 26.1s both; }
+  .ticket::before { content: ''; position: absolute; inset: 12px; border: 3px dashed rgba(58,44,28,.4);
+                    border-radius: 10px; }
+  .ticket .h { font-size: 56px; font-weight: 900; letter-spacing: 16px; text-align: center; color: #b3352c; }
+  .ticket .r { display: flex; align-items: center; gap: 26px; margin-top: 34px;
+               font-size: 40px; font-weight: 700; color: #4a3a26; }
+  .ticket .bar { flex: 1; height: 26px; border-radius: 13px;
+                 background: repeating-linear-gradient(90deg, #b9a888 0 60px, transparent 60px 84px); }
+  .ticket .photo { width: 130px; height: 160px; background: #cfc3a5; border: 3px solid #8f7c58;
+                   border-radius: 8px; position: relative; overflow: hidden; }
+  .ticket .photo::before { content: ''; position: absolute; top: 22px; left: 50%; width: 54px; height: 54px;
+                           border-radius: 50%; background: #9d8c68; transform: translateX(-50%); }
+  .ticket .photo::after { content: ''; position: absolute; bottom: -14px; left: 50%; width: 96px; height: 70px;
+                          border-radius: 50% 50% 0 0; background: #9d8c68; transform: translateX(-50%); }
+
+  /* ===== 场景6：2014 第一份工作 ===== */
+  .skyline { position: relative; width: 860px; height: 240px; margin-bottom: 26px;
+             animation: pop .6s ease-out 31.5s both; }
+  .skyline i { position: absolute; bottom: 0; background: #241708; border: 3px solid #55402a;
+               border-bottom: none; border-radius: 6px 6px 0 0; }
+  .skyline i::after { content: ''; position: absolute; inset: 22px 24px;
+    background-image: radial-gradient(circle 6px, rgba(255,195,107,.85) 5px, transparent 6px),
+                      radial-gradient(circle 6px, rgba(255,195,107,.5) 5px, transparent 6px);
+    background-size: 44px 40px, 44px 40px; background-position: 0 0, 22px 20px; }
+  .payslip { width: 620px; background: #f3e9d3; color: #3a2c1c; border-radius: 14px;
+             padding: 40px 54px; transform: rotate(2deg); position: relative;
+             box-shadow: 0 24px 70px rgba(0,0,0,.5);
+             animation: pop .6s cubic-bezier(.2,1.4,.4,1) 32.3s both; }
+  .payslip .h { font-size: 40px; font-weight: 800; color: #8a6a33; letter-spacing: 6px; }
+  .payslip .num { font-size: 96px; font-weight: 900; color: #b3352c; margin-top: 12px; }
+  .payslip .note { font-size: 34px; color: #6b5838; margin-top: 10px; }
+
+  /* ===== 场景7：2018 结婚买房 ===== */
+  .xi { width: 360px; height: 360px; background: #f3e9d3; border-radius: 20px;
+        display: flex; align-items: center; justify-content: center;
+        transform: rotate(-2deg); position: relative;
+        box-shadow: 0 24px 70px rgba(0,0,0,.5);
+        animation: pop .6s cubic-bezier(.2,1.4,.4,1) 38.1s both; }
+  .xi b { font-size: 190px; color: #c0392b; font-weight: 900; line-height: 1;
+          font-family: "KaiTi", "STKaiti", serif; }
+  .xi::before { content: ''; position: absolute; inset: 14px; border: 3px solid rgba(192,57,43,.5);
+                border-radius: 12px; }
+  .mortgage { margin-top: 46px; display: flex; gap: 22px; }
+  .mortgage span { font-size: 36px; font-weight: 700; color: #e8d3a8; white-space: nowrap;
+                   background: rgba(255,255,255,.05); border: 2px solid rgba(240,185,92,.4);
+                   border-radius: 60px; padding: 16px 30px; }
+  .mortgage span b { color: #f0b95c; }
+
+  /* ===== 场景8：2020 女儿 ===== */
+  .night { position: relative; width: 100%; height: 330px; margin-bottom: 8px;
+           animation: pop .8s ease-out 44.5s both; }
+  .moonbig { position: absolute; top: 30px; right: 170px; width: 170px; height: 170px;
+             border-radius: 50%; box-shadow: -50px 30px 0 0 #ffe9a8;
+             filter: drop-shadow(0 0 40px rgba(255,233,168,.35)); }
+  .star { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: #fff3cf;
+          opacity: .8; animation: twk 1.6s ease-in-out infinite alternate; }
+  @keyframes twk { from { opacity: .25; transform: scale(.8); } to { opacity: .95; transform: scale(1.15); } }
+  .birth { background: #fdf6e8; color: #3a2c1c; border-radius: 60px; padding: 34px 66px;
+           font-size: 52px; font-weight: 800; transform: rotate(2deg);
+           box-shadow: 0 24px 70px rgba(0,0,0,.5);
+           animation: pop .6s cubic-bezier(.2,1.4,.4,1) 45.4s both; }
+  .birth .pk { color: #d96f8e; }
+
+  /* ===== 场景9：35 岁 ===== */
+  .twocards { display: flex; flex-direction: column; gap: 40px; margin-bottom: 14px; }
+  .jobcard { width: 680px; background: #101a12; border: 3px solid rgba(96,190,120,.55);
+             border-radius: 26px; padding: 40px 50px; color: #cfe8d4;
+             animation: pop .6s cubic-bezier(.2,1.4,.4,1) 51.1s both; }
+  .jobcard .t { font-size: 38px; color: #7fae8c; letter-spacing: 4px; }
+  .jobcard .d { font-size: 50px; font-weight: 800; margin-top: 16px; }
+  .jobcard .d b { color: #ff8d6b; }
+  .report { width: 680px; background: #f3e9d3; color: #3a2c1c; border-radius: 26px;
+            padding: 40px 50px; transform: rotate(1.6deg);
+            box-shadow: 0 24px 70px rgba(0,0,0,.5);
+            animation: pop .6s cubic-bezier(.2,1.4,.4,1) 52.4s both; }
+  .report .t { font-size: 38px; color: #8a6a33; letter-spacing: 4px; }
+  .report .d { font-size: 50px; font-weight: 800; margin-top: 16px; color: #b3352c;
+               letter-spacing: 6px; }
+
+  /* ===== 场景10：结尾 ===== */
+  .horizon { position: relative; width: 100%; height: 380px; overflow: hidden; margin-bottom: 6px; }
+  .sunup { position: absolute; bottom: -170px; left: 50%; width: 340px; height: 340px;
+           margin-left: -170px; border-radius: 50%;
+           background: radial-gradient(circle, #ffd98a 0%, #ff9d4d 58%, #e2632f 100%);
+           box-shadow: 0 0 130px 50px rgba(255,160,70,.4);
+           animation: sunup 2.6s ease-out 58.2s both; }
+  @keyframes sunup { from { transform: translateY(190px); } to { transform: translateY(0); } }
+  .horizon::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 6px;
+                    background: linear-gradient(90deg, transparent, rgba(255,190,110,.75), transparent); }
+  .quote { font-family: "KaiTi", "STKaiti", "SimSun", serif; font-weight: 700; }
+  .s10 .line { margin-top: 26px; }
+  .cta { margin-top: 70px; font-size: 38px; color: #f0b95c; letter-spacing: 2px;
+         border: 3px solid rgba(240,185,92,.45); border-radius: 60px; padding: 18px 42px;
+         background: rgba(240,185,92,.08); }
+</style>
+</head>
+<body>
+  <div class="vignette"></div>
+  <div class="grain"></div>
+  <div class="dust">
+    <span style="left:140px; top:420px;  width:10px; height:10px; --d:9s;"></span>
+    <span style="left:880px; top:360px;  width:8px;  height:8px;  --d:12s;"></span>
+    <span style="left:520px; top:300px;  width:12px; height:12px; --d:11s;"></span>
+    <span style="left:240px; top:1420px; width:9px;  height:9px;  --d:10s;"></span>
+    <span style="left:910px; top:1500px; width:11px; height:11px; --d:13s;"></span>
+    <span style="left:640px; top:1660px; width:8px;  height:8px;  --d:9.5s;"></span>
+    <span style="left:120px; top:960px;  width:7px;  height:7px;  --d:14s;"></span>
+    <span style="left:960px; top:1020px; width:9px;  height:9px;  --d:10.5s;"></span>
+  </div>
+
+  <!-- 场景1：开场（0–4.8s） -->
+  <section class="scene s1">
+    <div class="kicker rise" style="animation-delay:.4s">一 个 普 通 人 的 自 述</div>
+    <h1 class="pop" style="animation-delay:.8s">我的<span class="am">上半生</span></h1>
+    <div class="seal pop" style="animation-delay:1.6s">35 岁 · 中场哨</div>
+    <p class="sub rise" style="animation-delay:2.2s">二线城市 · 普通家庭 · 1991</p>
+  </section>
+
+  <!-- 场景2：1991 出生（4.8–11.5s） -->
+  <section class="scene s2">
+    <div class="year" style="animation-delay:5.3s">1991</div>
+    <div class="moonsmall"></div>
+    <div class="block">
+      <div class="win on" style="animation-delay:5.6s"></div>
+      <div class="win"></div><div class="win on" style="animation-delay:6.1s"></div><div class="win"></div>
+      <div class="win"></div><div class="win on" style="animation-delay:5.8s"></div><div class="win"></div>
+      <div class="win on" style="animation-delay:6.4s"></div>
+      <div class="win on" style="animation-delay:6.0s"></div><div class="win"></div>
+      <div class="win on" style="animation-delay:6.7s"></div><div class="win"></div>
+      <div class="win"></div><div class="win"></div><div class="win on" style="animation-delay:6.2s"></div>
+      <div class="win"></div>
+    </div>
+    <p class="line rise" style="animation-delay:6.9s">我出生在<span class="am">二线城市</span>的一个家属院</p>
+    <p class="line dim rise" style="animation-delay:8.1s">爸爸开机床，妈妈在纺织厂三班倒</p>
+  </section>
+
+  <!-- 场景3：童年（11.5–19.5s） -->
+  <section class="scene s3">
+    <div class="year" style="animation-delay:12.0s">1997</div>
+    <div class="tvwrap">
+      <div class="tv"><div class="screen"></div></div>
+      <div class="popsicle"></div>
+    </div>
+    <p class="line rise" style="animation-delay:12.8s">小霸王，五毛钱的冰棍，<br>楼下疯跑的整个下午</p>
+    <p class="line dim rise" style="animation-delay:14.3s">1998 年厂子改制，爸爸下岗了</p>
+    <p class="line rise" style="animation-delay:15.8s">他摆早点摊那两年，我学会了自己热饭</p>
+  </section>
+
+  <!-- 场景4：2008（19.5–25.5s） -->
+  <section class="scene s4">
+    <div class="year" style="animation-delay:20.0s">2008</div>
+    <div class="duo">
+      <div class="cell w pop" style="animation-delay:20.5s">
+        <div class="icon"><div class="candle"><div class="flame"></div></div></div>
+        <div class="mon">5 月 · 汶川</div>
+        <div class="name">全国一起哭</div>
+      </div>
+      <div class="cell o pop" style="animation-delay:21.3s">
+        <div class="icon"><div class="torch"><div class="flame"></div></div></div>
+        <div class="mon">8 月 · 北京</div>
+        <div class="name">全国一起笑</div>
+      </div>
+    </div>
+    <p class="line rise" style="animation-delay:22.4s">14 岁，我在教室里<span class="rd">哭了</span>，又<span class="am">笑了</span></p>
+  </section>
+
+  <!-- 场景5：2010 高考（25.5–31s） -->
+  <section class="scene s5">
+    <div class="year" style="animation-delay:26.0s">2010</div>
+    <div class="ticket">
+      <div class="h">准 考 证</div>
+      <div class="r"><span>姓名</span><span class="bar"></span></div>
+      <div class="r"><span>座位</span><span class="bar"></span></div>
+      <div class="r"><span>照片</span><span class="photo"></span><span class="bar"></span></div>
+    </div>
+    <p class="line dim rise" style="animation-delay:27.2s">妈妈说：考出去吧　爸爸说：别走太远</p>
+    <p class="line rise" style="animation-delay:28.7s">最后，我留在本市一所普通大学</p>
+  </section>
+
+  <!-- 场景6：2014 工作（31–37.5s） -->
+  <section class="scene s6">
+    <div class="year" style="animation-delay:31.5s">2014</div>
+    <div class="skyline">
+      <i style="left:0;    width:150px; height:190px;"></i>
+      <i style="left:170px; width:120px; height:140px;"></i>
+      <i style="left:310px; width:170px; height:230px;"></i>
+      <i style="left:500px; width:130px; height:160px;"></i>
+      <i style="left:650px; width:190px; height:210px;"></i>
+    </div>
+    <div class="payslip">
+      <div class="h">工资条 · 2014.07</div>
+      <div class="num">¥3200</div>
+      <div class="note">房租 ¥600 · 城中村的单间</div>
+    </div>
+    <p class="line dim rise" style="animation-delay:33.6s">睡得着，有劲</p>
+    <p class="line rise" style="animation-delay:34.8s">发誓要让爸妈过上<span class="am">好日子</span></p>
+  </section>
+
+  <!-- 场景7：2018 结婚买房（37.5–44s） -->
+  <section class="scene s7">
+    <div class="year" style="animation-delay:38.0s">2018</div>
+    <div class="xi"><b>囍</b></div>
+    <div class="mortgage rise" style="animation-delay:39.5s">
+      <span>两家凑的首付</span><span>贷款 <b>30 年</b></span><span>月供 <b>¥4300</b></span>
+    </div>
+    <p class="line rise" style="animation-delay:40.9s">签字时手在抖，心里是甜的</p>
+  </section>
+
+  <!-- 场景8：2020 女儿（44–50.5s） -->
+  <section class="scene s8">
+    <div class="year" style="animation-delay:44.5s">2020</div>
+    <div class="night">
+      <div class="moonbig"></div>
+      <span class="star" style="left:180px; top:80px;  animation-delay:.2s;"></span>
+      <span class="star" style="left:420px; top:150px; animation-delay:.9s;"></span>
+      <span class="star" style="left:660px; top:60px;  animation-delay:.5s;"></span>
+      <span class="star" style="left:300px; top:230px; animation-delay:1.3s;"></span>
+      <span class="star" style="left:800px; top:210px; animation-delay:.7s;"></span>
+    </div>
+    <div class="birth">女儿出生 · <span class="pk">3.14kg</span> · 小棉袄</div>
+    <p class="line rise" style="animation-delay:46.6s">那晚我在产房外，攥着拳转圈</p>
+    <p class="line dim rise" style="animation-delay:48.1s">从那天起，不敢病，不敢输，不敢辞职</p>
+  </section>
+
+  <!-- 场景9：35 岁（50.5–57.5s） -->
+  <section class="scene s9">
+    <div class="year" style="animation-delay:51.0s">2026</div>
+    <div class="twocards">
+      <div class="jobcard">
+        <div class="t">招聘软件 · 岗位要求</div>
+        <div class="d">年龄 <b>35 岁以下</b></div>
+      </div>
+      <div class="report">
+        <div class="t">体检报告 · 今年新增</div>
+        <div class="d">↑ ↑ ↑ 三个箭头</div>
+      </div>
+    </div>
+    <p class="line dim rise" style="animation-delay:53.4s">爸爸的白发，比房贷更让我心慌</p>
+    <p class="line rise" style="animation-delay:55.0s">每晚到家，先在车里坐一会儿</p>
+  </section>
+
+  <!-- 场景10：结尾（57.5–66s） -->
+  <section class="scene s10">
+    <div class="horizon"><div class="sunup"></div></div>
+    <p class="line quote rise" style="animation-delay:59.0s">上半生，没活成谁的骄傲</p>
+    <p class="line quote rise" style="animation-delay:60.2s">也没输给<span class="am">生活</span></p>
+    <p class="line quote rise" style="animation-delay:61.4s">下半生，把日子过成<span class="am">自己的样子</span></p>
+    <div class="cta rise" style="animation-delay:62.6s">评论区聊聊：你的上半生，讲到第几年？</div>
+  </section>
+</body>
+</html>
