@@ -5,7 +5,7 @@
 ## 目录地图
 
 ```
-cangyuantu/
+沧元图续写/
 ├── README.md
 ├── CLAUDE.md
 ├── .claude/skills/          # novel-* 技能
@@ -26,11 +26,11 @@ cangyuantu/
 ```bash
 # 从仓库根扫描入库
 python media-cli.py asset scan novel --project 沧元图 \
-  --dir ./assets/novels/cangyuantu/chapters/
+  --dir ./assets/novels/沧元图续写/chapters/
 
 # 单章转文章/分镜
 python media-cli.py story article \
-  "assets/novels/cangyuantu/chapters/8-续写-第1章.txt" --type deep -o article.md
+  "assets/novels/沧元图续写/chapters/8-续写-第1章.txt" --type deep -o article.md
 ```
 
 ## 状态

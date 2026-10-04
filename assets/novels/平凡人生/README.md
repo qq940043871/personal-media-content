@@ -1,15 +1,17 @@
-# 平凡人生（diff_life）
+# 平凡人生
 
 都市/人生题材长篇：选题 → 核心设定 → 大纲 → 剧情单元 → 分章大纲 → 正文。
 
 ## 目录地图
 
 ```
-diff_life/
+平凡人生/
 ├── README.md
 ├── CLAUDE.md
 ├── process/                 # 1-选题 … 7-封面提示词、5/6 大纲与单元
 ├── chapters/                # 8-正文-第N章.txt（约 300）
+├── chapters-番茄版/          # 合并版（66 章/单章约 2 千字，story merge 生成；
+│                             不进盘点口径，源 chapters/ 只读不动）
 └── review/                  # 审核报告-第N章.txt、剧情单元审核报告
 ```
 
@@ -28,9 +30,18 @@ diff_life/
 
 ```bash
 python media-cli.py story article \
-  "assets/novels/diff_life/chapters/8-正文-第1章.txt" --type summary -o article.md
+  "assets/novels/平凡人生/chapters/8-正文-第1章.txt" --type summary -o article.md
 ```
 
 ## 状态
 
 - 约 300 章正文；过程与审核报告保留完整
+
+## 番茄发布版
+
+`chapters-番茄版/` 由以下命令生成（剧情单元边界优先、按字数目标贪婪分组，
+对照表见其 `合并对照.md`；源稿只读，重新生成直接重跑即可覆盖）：
+
+```bash
+python media-cli.py story merge chapters/ \n    -o chapters-番茄版 --per 8 --target 2200
+```
